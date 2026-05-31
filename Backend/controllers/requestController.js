@@ -1,6 +1,7 @@
 import HelpRequest from "../models/HelpRequest.js";
 
 export const createRequest = async (req, res) => {
+  console.log(req.user);
   try {
     const {
       title,
@@ -14,7 +15,7 @@ export const createRequest = async (req, res) => {
       description,
       category,
       amountNeeded,
-      studentId: "683a00000000000000000001",
+      studentId: req.user._id,
     });
 
     res.status(201).json(request);
@@ -31,6 +32,161 @@ export const getAllRequests = async (req, res) => {
     const requests = await HelpRequest.find();
 
     res.status(200).json(requests);
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+export const updateRequest = async (req, res) => {
+  try {
+    const request = await HelpRequest.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+
+    if (!request) {
+      return res.status(404).json({
+        message: "Request not found",
+      });
+    }
+
+    res.status(200).json(request);
+
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+export const deleteRequest = async (req, res) => {
+  try {
+    const request = await HelpRequest.findByIdAndDelete(
+      req.params.id
+    );
+
+    if (!request) {
+      return res.status(404).json({
+        message: "Request not found",
+      });
+    }
+
+    res.status(200).json({
+      message: "Request deleted successfully",
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+
+export const getMyRequests = async (req, res) => {
+  try {
+    const requests = await HelpRequest.find({
+      studentId: req.user._id,
+    });
+
+    res.status(200).json(requests);
+
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+
+export const approveRequest = async (req, res) => {
+  try {
+
+    const request = await HelpRequest.findById(
+      req.params.id
+    );
+
+    if (!request) {
+      return res.status(404).json({
+        message: "Request not found",
+      });
+    }
+
+    request.status = "approved";
+
+    await request.save();
+
+    res.status(200).json(request);
+
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+export const rejectRequest = async (req, res) => {
+  try {
+
+    const request = await HelpRequest.findById(
+      req.params.id
+    );
+
+    if (!request) {
+      return res.status(404).json({
+        message: "Request not found",
+      });
+    }
+
+    request.status = "rejected";
+
+    await request.save();
+
+    res.status(200).json(request);
+
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+export const getApprovedRequests = async (req, res) => {
+  try {
+
+    const requests = await HelpRequest.find({
+      status: "approved",
+    });
+
+    res.status(200).json(requests);
+
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+export const getRequestById = async (req, res) => {
+  try {
+    const request = await HelpRequest.findById(
+      req.params.id
+    ).populate(
+      "studentId",
+      "name email"
+    );
+
+    if (!request) {
+      return res.status(404).json({
+        message: "Request not found",
+      });
+    }
+
+    res.status(200).json(request);
+
   } catch (error) {
     res.status(500).json({
       message: error.message,

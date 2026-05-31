@@ -1,10 +1,12 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-
+import donationRoutes from "./routes/donationRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 import requestRoutes from "./routes/requestRoutes.js";
 import connectionDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 
 dotenv.config();
 
@@ -19,6 +21,9 @@ const startServer = async () => {
 
     app.use("/api/requests", requestRoutes);
     app.use("/api/auth", authRoutes);
+    app.use("/api/donations", donationRoutes);
+    app.use("/api/admin",adminRoutes);
+    app.use("/api/users", userRoutes);
 
     app.get("/", (req, res) => {
       res.send("Welcome to Helping Hands API");

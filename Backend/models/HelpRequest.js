@@ -21,12 +21,17 @@ const helpRequestSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    receivedAmount: {
+  type: Number,
+  default: 0,
+},
 
     status: {
       type: String,
       enum: ["pending", "approved", "rejected", "completed"],
       default: "pending",
     },
+
 
     studentId: {
       type: mongoose.Schema.Types.ObjectId,
