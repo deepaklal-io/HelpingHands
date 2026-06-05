@@ -25,11 +25,6 @@ const userSchema = new mongoose.Schema(
       default: "student",
     },
 
-    // Account verification
-    isVerified: {
-      type: Boolean,
-      default: false,
-    },
   },
   {
     timestamps: true,
