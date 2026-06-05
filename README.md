@@ -274,12 +274,6 @@ npm install cors
 
 ---
 
-## 📄 License
-
-This project is open source and available under the [MIT License](LICENSE).
-
----
-
 ## 👨‍💻 Author
 
-Made with ❤️ by [Deepak Lal](https://github.com/deepaklal009)
+Deepak Lal(https://github.com/deepaklal009)
