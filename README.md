@@ -276,4 +276,4 @@ npm install cors
 
 ## 👨‍💻 Author
 
-Deepak Lal(https://github.com/deepaklal009)
+=> [Deepak Lal](https://github.com/deepaklal009)
