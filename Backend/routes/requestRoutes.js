@@ -16,35 +16,19 @@ import { adminOnly } from "../middleware/adminMiddleware.js";
 
 const router = express.Router();
 
-router.put("/approve-test", (req, res) => {
-  res.json({
-    message: "Approve route working"
-  });
-});
+// Admin actions
+router.patch("/:id/approve", protect, adminOnly, approveRequest);
+router.patch("/:id/reject",  protect, adminOnly, rejectRequest);
 
-router.put(
-  "/:id/approve",
-  protect,
-  adminOnly,
-  approveRequest
-);
+// Student routes
+router.post("/",    protect, createRequest);
+router.get("/my",   protect, getMyRequests);
+router.put("/:id",  protect, updateRequest);
+router.delete("/:id", protect, deleteRequest);
 
-router.put(
-  "/:id/reject",
-  protect,
-  adminOnly,
-  rejectRequest
-);
-router.get("/approved",getApprovedRequests);
-
-router.post("/", protect, createRequest);
-router.get("/my", protect, getMyRequests);
-router.get("/", getAllRequests);
+// Public / shared routes
+router.get("/approved", getApprovedRequests);
+router.get("/",    getAllRequests);
 router.get("/:id", getRequestById);
-
-router.put("/:id", updateRequest);
-
-router.delete("/:id", deleteRequest);
-
 
 export default router;

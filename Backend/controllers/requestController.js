@@ -3,6 +3,7 @@ import HelpRequest from "../models/HelpRequest.js";
 export const createRequest = async (req, res) => {
   console.log(req.user);
   try {
+    
     const {
       title,
       description,
@@ -29,22 +30,19 @@ export const createRequest = async (req, res) => {
 
 export const getAllRequests = async (req, res) => {
   try {
-    const requests = await HelpRequest.find();
-
+    const requests = await HelpRequest.find()
+      .populate("studentId", "name email");  // ← add this line
     res.status(200).json(requests);
   } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
+    res.status(500).json({ message: error.message });
   }
 };
 
 export const updateRequest = async (req, res) => {
   try {
-    const request = await HelpRequest.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
+
+    const request = await HelpRequest.findById(
+      req.params.id
     );
 
     if (!request) {
@@ -53,7 +51,23 @@ export const updateRequest = async (req, res) => {
       });
     }
 
-    res.status(200).json(request);
+    if (
+      request.studentId.toString() !==
+      req.user._id.toString()
+    ) {
+      return res.status(403).json({
+        message: "Not authorized",
+      });
+    }
+
+    const updatedRequest =
+      await HelpRequest.findByIdAndUpdate(
+        req.params.id,
+        req.body,
+        { new: true }
+      );
+
+    res.status(200).json(updatedRequest);
 
   } catch (error) {
     res.status(500).json({
@@ -64,7 +78,8 @@ export const updateRequest = async (req, res) => {
 
 export const deleteRequest = async (req, res) => {
   try {
-    const request = await HelpRequest.findByIdAndDelete(
+
+    const request = await HelpRequest.findById(
       req.params.id
     );
 
@@ -74,8 +89,20 @@ export const deleteRequest = async (req, res) => {
       });
     }
 
+    if (
+      request.studentId.toString() !==
+      req.user._id.toString()
+    ) {
+      return res.status(403).json({
+        message: "Not authorized",
+      });
+    }
+
+    await request.deleteOne();
+
     res.status(200).json({
-      message: "Request deleted successfully",
+      message:
+        "Request deleted successfully",
     });
 
   } catch (error) {

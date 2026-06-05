@@ -1,35 +1,43 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
+
 export const registerUser = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
-    const existingUser = await User.findOne({ email });
+    // University email check for students
+    if (role === "student") {
+      const isUniversityEmail = email.toLowerCase().endsWith(".edu.pk");
 
+      if (!isUniversityEmail) {
+        return res.status(400).json({
+          message: "Students must register with a university email address (e.g. yourname@nust.edu.pk)",
+        });
+      }
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({
-        message: "User already exists",
+        message: "User already exists with this email",
       });
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = new User({
+    // Create user
+    const user = await User.create({
       name,
       email,
       password: hashedPassword,
-      role,
+      role: role || "student",
     });
 
-    await newUser.save();
-
-    newUser.password = undefined;
-
     res.status(201).json({
-      message: "User registered successfully",
-      user: newUser,
+      message: "Account created successfully. Please login.",
     });
 
   } catch (error) {
@@ -51,10 +59,7 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    const isMatch = await bcrypt.compare(
-      password,
-      user.password
-    );
+    const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
       return res.status(401).json({
@@ -63,14 +68,9 @@ export const loginUser = async (req, res) => {
     }
 
     const token = jwt.sign(
-      {
-        id: user._id,
-        role: user.role,
-      },
+      { id: user._id, role: user.role },
       process.env.JWT_SECRET,
-      {
-        expiresIn: "7d",
-      }
+      { expiresIn: "7d" }
     );
 
     res.status(200).json({
@@ -88,4 +88,4 @@ export const loginUser = async (req, res) => {
       message: error.message,
     });
   }
-};
+};  
