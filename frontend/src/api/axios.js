@@ -1,8 +1,9 @@
 import axios from "axios";
 
+const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:4500/api";
+
 const api = axios.create({
-  baseURL: "https://helping-hands-backend.vercel.app/api",
-  //         ↑ paste your actual Vercel backend URL here
+  baseURL,
 });
 
 api.interceptors.request.use((config) => {

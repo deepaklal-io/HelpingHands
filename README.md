@@ -82,7 +82,7 @@ Create a `.env` file inside the `Backend/` folder:
 
 ```env
 PORT=4500
-MONGO_URI=your_mongodb_connection_string
+MONGO_URL=your_mongodb_connection_string
 JWT_SECRET=your_secret_key_here
 ```
 
@@ -216,8 +216,10 @@ Password: admin123
 | Variable | Description | Example |
 |----------|-------------|---------|
 | `PORT` | Backend server port | `4500` |
-| `MONGO_URI` | MongoDB connection string | `mongodb://localhost:27017/helpinghands` |
+| `MONGO_URL` | MongoDB connection string | `mongodb://localhost:27017/helpinghands` |
 | `JWT_SECRET` | Secret key for JWT tokens | `mysecretkey123` |
+
+For the frontend API client, set `VITE_API_BASE_URL` if your backend is not running at `http://localhost:4500/api`.
 
 ---
 

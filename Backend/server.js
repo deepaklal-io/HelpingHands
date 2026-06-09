@@ -22,19 +22,24 @@ app.use(cors({
 
 app.use(express.json());
 
-// Connect DB and register routes
+app.get("/", (req, res) => {
+  res.send("Welcome to Helping Hands API");
+});
+
+app.use("/api/requests", requestRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/donations", donationRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/users", userRoutes);
+
+// Connect DB after the API is mounted so the server still responds even if
+// the database handshake fails.
 const initApp = async () => {
-  await connectionDB();
-
-  app.use("/api/requests", requestRoutes);
-  app.use("/api/auth", authRoutes);
-  app.use("/api/donations", donationRoutes);
-  app.use("/api/admin", adminRoutes);
-  app.use("/api/users", userRoutes);
-
-  app.get("/", (req, res) => {
-    res.send("Welcome to Helping Hands API");
-  });
+  try {
+    await connectionDB();
+  } catch (err) {
+    console.error("Backend started without MongoDB:", err.message);
+  }
 };
 
 initApp().catch((err) => {
