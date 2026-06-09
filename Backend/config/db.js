@@ -1,30 +1,35 @@
 import mongoose from "mongoose";
 
-let isConnected = false; // cache connection for serverless
+let connectionPromise = null;
 
 const connectionDB = async () => {
-  if (isConnected) {
-    console.log("Using existing MongoDB connection");
-    return;
+  if (mongoose.connection.readyState === 1) {
+    return mongoose.connection;
   }
 
-  const mongoUrl = process.env.MONGO_URI;
+  if (connectionPromise) {
+    return connectionPromise;
+  }
+
+  const mongoUrl = process.env.MONGO_URI || process.env.MONGO_URL;
 
   if (!mongoUrl) {
-    throw new Error("MONGO_URI is not defined in environment variables");
+    throw new Error("MONGO_URI (or MONGO_URL) is not defined in environment variables");
   }
 
-  try {
-    await mongoose.connect(mongoUrl, {
-      serverSelectionTimeoutMS: 30000,
-      socketTimeoutMS: 30000,
-      connectTimeoutMS: 30000,
-      maxPoolSize: 10,
-    });
+  connectionPromise = mongoose.connect(mongoUrl, {
+    serverSelectionTimeoutMS: 30000,
+    socketTimeoutMS: 30000,
+    connectTimeoutMS: 30000,
+    maxPoolSize: 10,
+  });
 
-    isConnected = true;
+  try {
+    await connectionPromise;
     console.log("MongoDB connected successfully");
+    return mongoose.connection;
   } catch (error) {
+    connectionPromise = null;
     console.error("MongoDB connection failed:", error.message);
     throw error;
   }

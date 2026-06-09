@@ -30,6 +30,17 @@ app.use(cors({
 
 app.use(express.json());
 
+app.use("/api", async (req, res, next) => {
+  try {
+    await connectionDB();
+    next();
+  } catch (error) {
+    res.status(503).json({
+      message: "Database connection failed",
+    });
+  }
+});
+
 app.get("/", (req, res) => {
   res.send("Welcome to Helping Hands API");
 });
@@ -40,8 +51,6 @@ app.use("/api/donations", donationRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/users", userRoutes);
 
-// Connect DB after the API is mounted so the server still responds even if
-// the database handshake fails.
 const initApp = async () => {
   try {
     await connectionDB();
