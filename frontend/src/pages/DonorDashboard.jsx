@@ -102,7 +102,8 @@ export default function DonorDashboard() {
         )}
 
         {tab === "history" && (
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div className="bg-white border border-gray-200 rounded-xl overflow-x-auto">
+
             {donations.length === 0 ? (
               <div className="text-center py-16 text-gray-400">
                 <p className="text-lg mb-1">No donations yet</p>

@@ -119,7 +119,7 @@ export default function AdminDashboard() {
           <div className="text-center py-16 text-gray-400">Loading...</div>
         ) : tab === "requests" ? (
           <div className="bg-white border border-gray-200 rounded-xl overflow-x-auto">
-            <table className="w-full text-sm min-w-[600px]">
+              <table className="w-full text-sm min-w-[600px]">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="text-left px-5 py-3 text-gray-600 font-medium">Title</th>
