@@ -19,8 +19,13 @@ const allowedOrigins = [
 ].filter(Boolean);
 
 app.use(cors({
-  origin: allowedOrigins,
+  origin: [
+    "http://localhost:5173",
+    "https://helping-hands-frontend.vercel.app",
+  ],
   credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 }));
 
 app.use(express.json());
