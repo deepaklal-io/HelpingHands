@@ -1,7 +1,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:4500/api",
+  baseURL: "https://helping-hands-backend.vercel.app/api",
+  //         ↑ paste your actual Vercel backend URL here
 });
 
 api.interceptors.request.use((config) => {
