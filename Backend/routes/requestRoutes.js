@@ -2,6 +2,7 @@ import express from "express";
 import {
   createRequest,
   getAllRequests,
+  getFeaturedRequests,
   getMyRequests,
   getRequestById,
   getApprovedRequests,
@@ -21,7 +22,13 @@ router.patch("/:id/approve", protect, adminOnly, approveRequest);
 router.patch("/:id/reject",  protect, adminOnly, rejectRequest);
 
 // Student routes
-router.post("/",    protect, createRequest);
+router.post(
+  "/",
+  protect,
+  upload.array("documents", 5),
+  createRequest
+);
+router.get("/featured", getFeaturedRequests);
 router.get("/my",   protect, getMyRequests);
 router.put("/:id",  protect, updateRequest);
 router.delete("/:id", protect, deleteRequest);

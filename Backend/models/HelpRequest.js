@@ -31,6 +31,11 @@ const helpRequestSchema = new mongoose.Schema(
       enum: ["pending", "approved", "rejected", "completed"],
       default: "pending",
     },
+    documents: [
+  {
+    type: String,
+  },
+],
 
 
     studentId: {

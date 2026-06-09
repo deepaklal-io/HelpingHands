@@ -7,6 +7,7 @@ import requestRoutes from "./routes/requestRoutes.js";
 import connectionDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import path from "path";
 
 dotenv.config();
 

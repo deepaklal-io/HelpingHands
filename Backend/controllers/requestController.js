@@ -11,6 +11,10 @@ export const createRequest = async (req, res) => {
       amountNeeded,
     } = req.body;
 
+    documents: req.files.map(
+  (file) => file.path
+);
+
     const request = await HelpRequest.create({
       title,
       description,
@@ -35,6 +39,24 @@ export const getAllRequests = async (req, res) => {
     res.status(200).json(requests);
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+export const getFeaturedRequests = async (req, res) => {
+  try {
+
+    const requests = await HelpRequest.find({
+      status: "approved",
+    })
+      .populate("studentId", "name")
+      .sort({ createdAt: -1 })
+      .limit(6);
+
+    res.json(requests);
+
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
   }
 };
 
@@ -183,17 +205,12 @@ export const rejectRequest = async (req, res) => {
 
 export const getApprovedRequests = async (req, res) => {
   try {
-
     const requests = await HelpRequest.find({
       status: "approved",
-    });
-
+    }).populate("studentId", "name email"); // ← add this
     res.status(200).json(requests);
-
   } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
+    res.status(500).json({ message: error.message });
   }
 };
 
