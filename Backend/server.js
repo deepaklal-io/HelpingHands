@@ -14,34 +14,40 @@ const app = express();
 
 app.use(cors({
   origin: [
-    "http://localhost:5173",                    // local dev
-    "https://helping-hands.vercel.app",         // production
-  ]
+    "http://localhost:5173",
+    "https://helping-hands-frontend.vercel.app",
+  ],
+  credentials: true,
 }));
+
 app.use(express.json());
 
-const startServer = async () => {
-  try {
-    await connectionDB();
+// Connect DB and register routes
+const initApp = async () => {
+  await connectionDB();
 
-    app.use("/api/requests", requestRoutes);
-    app.use("/api/auth", authRoutes);
-    app.use("/api/donations", donationRoutes);
-    app.use("/api/admin",adminRoutes);
-    app.use("/api/users", userRoutes);
+  app.use("/api/requests", requestRoutes);
+  app.use("/api/auth", authRoutes);
+  app.use("/api/donations", donationRoutes);
+  app.use("/api/admin", adminRoutes);
+  app.use("/api/users", userRoutes);
 
-    app.get("/", (req, res) => {
-      res.send("Welcome to Helping Hands API");
-    });
-
-    const PORT = process.env.PORT || 4500;
-    app.listen(PORT, () => {
-      console.log(`Server running on ${PORT}`);
-    });
-  } catch (error) {
-    console.error("Failed to start server:", error.message);
-    process.exit(1);
-  }
+  app.get("/", (req, res) => {
+    res.send("Welcome to Helping Hands API");
+  });
 };
 
-startServer();
+initApp().catch((err) => {
+  console.error("Failed to initialize app:", err.message);
+});
+
+// For local development
+if (process.env.NODE_ENV !== "production") {
+  const PORT = process.env.PORT || 4500;
+  app.listen(PORT, () => {
+    console.log(`Server running on ${PORT}`);
+  });
+}
+
+// For Vercel serverless — must export app
+export default app;
