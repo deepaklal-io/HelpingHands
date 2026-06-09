@@ -12,11 +12,14 @@ dotenv.config();
 
 const app = express();
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://helping-hands-frontend.vercel.app",
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
 app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "https://helping-hands-frontend.vercel.app",
-  ],
+  origin: allowedOrigins,
   credentials: true,
 }));
 

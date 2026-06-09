@@ -11,7 +11,8 @@ const __dirname = dirname(__filename);
 dotenv.config({ path: join(__dirname, "../.env") });
 
 const createAdmin = async () => {
-  await mongoose.connect(process.env.MONGO_URL);
+  const mongoUrl = process.env.MONGO_URL || process.env.MONGO_URI;
+  await mongoose.connect(mongoUrl);
 
   const existing = await User.findOne({ email: "admin@helpinghands.com" });
   if (existing) {

@@ -1,12 +1,14 @@
 import mongoose from "mongoose";
 
 const connectionDB = async () => {
-  if (!process.env.MONGO_URL) {
-    throw new Error("MONGO_URL is not defined in .env");
+  const mongoUrl = process.env.MONGO_URL || process.env.MONGO_URI;
+
+  if (!mongoUrl) {
+    throw new Error("MONGO_URL (or MONGO_URI) is not defined in the environment");
   }
 
   try {
-    await mongoose.connect(process.env.MONGO_URL);
+    await mongoose.connect(mongoUrl);
     console.log("MongoDB connected successfully");
   } catch (error) {
     console.error("MongoDB connection failed:", error.message);
