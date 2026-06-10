@@ -25,32 +25,39 @@ export default function StudentDashboard() {
 
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
-  const fetchMyRequests = async () => {
-    try {
-      const { data } = await api.get("/requests/my");
-      setRequests(data);
-    } catch {
-      setError("Failed to load your requests.");
-    }
-  };
+ const fetchMyRequests = async () => {
+  try {
+    const { data } = await api.get("/requests/my");
+    // ✅ Make sure data is always an array
+    setRequests(Array.isArray(data) ? data : []);
+  } catch {
+    setError("Failed to load your requests.");
+    setRequests([]); // ✅ Set empty array on error
+  }
+};
 
-  const fetchAllRequests = async () => {
-    try {
-      const { data } = await api.get("/requests/approved");
-      setAllRequests(data.filter(r => {
-        const requestOwnerId = r.studentId?._id?.toString() || r.studentId?.toString();
-        const currentUserId = user?.id?.toString() || user?._id?.toString();
-        return requestOwnerId !== currentUserId;
-      }));
-    } catch {}
-  };
+const fetchAllRequests = async () => {
+  try {
+    const { data } = await api.get("/requests/approved");
+    const list = Array.isArray(data) ? data : [];
+    setAllRequests(list.filter(r => {
+      const requestOwnerId = r.studentId?._id?.toString() || r.studentId?.toString();
+      const currentUserId = user?.id?.toString() || user?._id?.toString();
+      return requestOwnerId !== currentUserId;
+    }));
+  } catch {
+    setAllRequests([]); // ✅
+  }
+};
 
-  const fetchMyDonations = async () => {
-    try {
-      const { data } = await api.get("/donations/my");
-      setDonations(data);
-    } catch {}
-  };
+const fetchMyDonations = async () => {
+  try {
+    const { data } = await api.get("/donations/my");
+    setDonations(Array.isArray(data) ? data : []); // ✅
+  } catch {
+    setDonations([]); // ✅
+  }
+};
 
   useEffect(() => {
     const loadAll = async () => {
