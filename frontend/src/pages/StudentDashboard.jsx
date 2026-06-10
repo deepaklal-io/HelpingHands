@@ -107,7 +107,7 @@ const fetchMyDonations = async () => {
     setChallanFile(null);
     setChallanPreview(null);
     setShowForm(false);
-    fetchMyRequests();
+    await fetchMyRequests();
   } catch (err) {
     setError(err.response?.data?.message || "Failed to create request.");
   } finally {
