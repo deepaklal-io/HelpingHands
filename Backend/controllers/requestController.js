@@ -1,5 +1,5 @@
 import HelpRequest from "../models/HelpRequest.js";
-import cloudinary from "../utils/cloudinary.js";
+
 
 const requestPopulate = "studentId";
 
