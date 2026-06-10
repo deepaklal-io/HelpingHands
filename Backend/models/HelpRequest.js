@@ -21,27 +21,35 @@ const helpRequestSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+
     receivedAmount: {
-  type: Number,
-  default: 0,
-},
+      type: Number,
+      default: 0,
+    },
 
     status: {
       type: String,
       enum: ["pending", "approved", "rejected", "completed"],
       default: "pending",
     },
-    documents: [
-  {
-    type: String,
-  },
-],
-
 
     studentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+    },
+
+    // ✅ Fee challan image uploaded to Cloudinary
+    challanImage: {
+      type: String,
+      default: null,
+    },
+
+    // ✅ Bank account for receiving donations
+    bankAccount: {
+      accountTitle: { type: String, default: "" },
+      accountNumber: { type: String, default: "" },
+      bankName: { type: String, default: "" },
     },
   },
   {
@@ -49,9 +57,6 @@ const helpRequestSchema = new mongoose.Schema(
   }
 );
 
-const HelpRequest = mongoose.model(
-  "HelpRequest",
-  helpRequestSchema
-);
+const HelpRequest = mongoose.model("HelpRequest", helpRequestSchema);
 
 export default HelpRequest;
