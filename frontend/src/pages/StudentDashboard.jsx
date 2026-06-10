@@ -119,7 +119,11 @@ const fetchMyDonations = async () => {
     if (!confirm("Delete this request?")) return;
     try {
       await api.delete(`/requests/${id}`);
-      setRequests((prev) => prev.filter((r) => r._id !== id));
+      setRequests(
+  Array.isArray(data)
+    ? data.filter(Boolean)
+    : []
+);
     } catch {
       setError("Failed to delete request.");
     }
