@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://helping-hands-backend.vercel.app/api",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:4500/api",
   withCredentials: true,
 });
 

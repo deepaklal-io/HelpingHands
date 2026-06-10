@@ -3,7 +3,10 @@ import Navbar from "../components/Navbar";
 import RequestCard from "../components/RequestCard";
 import api from "../api/axios";
 
-const EMPTY_FORM = { title: "", description: "", amountNeeded: "", category: "" };
+const EMPTY_FORM = {
+  title: "", description: "", amountNeeded: "", category: "",
+  accountTitle: "", accountNumber: "", bankName: "",
+};
 
 export default function StudentDashboard() {
   const [requests, setRequests] = useState([]);
@@ -13,6 +16,8 @@ export default function StudentDashboard() {
   const [tab, setTab] = useState("my");
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [challanFile, setChallanFile] = useState(null);
+  const [challanPreview, setChallanPreview] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -32,12 +37,11 @@ export default function StudentDashboard() {
   const fetchAllRequests = async () => {
     try {
       const { data } = await api.get("/requests/approved");
-      // Filter out own requests
       setAllRequests(data.filter(r => {
-  const requestOwnerId = r.studentId?._id?.toString() || r.studentId?.toString();
-  const currentUserId = user?.id?.toString() || user?._id?.toString();
-  return requestOwnerId !== currentUserId;
-}));
+        const requestOwnerId = r.studentId?._id?.toString() || r.studentId?.toString();
+        const currentUserId = user?.id?.toString() || user?._id?.toString();
+        return requestOwnerId !== currentUserId;
+      }));
     } catch {}
   };
 
@@ -59,23 +63,50 @@ export default function StudentDashboard() {
   const handleChange = (e) =>
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-    setError("");
-    setSuccess("");
-    try {
-      await api.post("/requests", form);
-      setSuccess("Request submitted! It will be reviewed by an admin.");
-      setForm(EMPTY_FORM);
-      setShowForm(false);
-      fetchMyRequests();
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to create request.");
-    } finally {
-      setSubmitting(false);
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setChallanFile(file);
+      setChallanPreview(URL.createObjectURL(file));
     }
   };
+
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (!challanFile) {
+    setError("Please upload your fee challan image.");
+    return;
+  }
+  setSubmitting(true);
+  setError("");
+  setSuccess("");
+
+  try {
+    // Convert file to base64
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(challanFile);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+    });
+
+    await api.post("/requests", {
+      ...form,
+      challanImageBase64: base64,
+    });
+
+    setSuccess("Request submitted! Admin will review your challan and approve.");
+    setForm(EMPTY_FORM);
+    setChallanFile(null);
+    setChallanPreview(null);
+    setShowForm(false);
+    fetchMyRequests();
+  } catch (err) {
+    setError(err.response?.data?.message || "Failed to create request.");
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   const handleDelete = async (id) => {
     if (!confirm("Delete this request?")) return;
@@ -111,7 +142,6 @@ export default function StudentDashboard() {
       <Navbar />
       <div className="max-w-5xl mx-auto px-4 py-8">
 
-        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-2xl font-bold text-gray-800">Student Dashboard</h2>
@@ -127,7 +157,6 @@ export default function StudentDashboard() {
           )}
         </div>
 
-        {/* Alerts */}
         {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">{error}</div>}
         {success && <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-lg">{success}</div>}
 
@@ -165,19 +194,18 @@ export default function StudentDashboard() {
         {/* MY REQUESTS TAB */}
         {tab === "my" && (
           <>
-            {/* Create Form */}
             {showForm && (
               <div className="bg-white border border-gray-200 rounded-xl p-6 mb-8">
-                <h3 className="font-semibold text-gray-800 mb-5">New Funding Request</h3>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <h3 className="font-semibold text-gray-800 mb-1">New Funding Request</h3>
+                <p className="text-xs text-gray-400 mb-5">Fill all fields carefully. Admin will verify your challan before approving.</p>
+
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  {/* Title & Category */}
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
                       <input
-                        name="title"
-                        value={form.title}
-                        onChange={handleChange}
-                        required
+                        name="title" value={form.title} onChange={handleChange} required
                         placeholder="e.g. Semester fee support"
                         className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                       />
@@ -185,10 +213,7 @@ export default function StudentDashboard() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
                       <select
-                        name="category"
-                        value={form.category}
-                        onChange={handleChange}
-                        required
+                        name="category" value={form.category} onChange={handleChange} required
                         className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                       >
                         <option value="">Select category</option>
@@ -200,35 +225,97 @@ export default function StudentDashboard() {
                       </select>
                     </div>
                   </div>
+
+                  {/* Description */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                     <textarea
-                      name="description"
-                      value={form.description}
-                      onChange={handleChange}
-                      required
-                      rows={3}
+                      name="description" value={form.description} onChange={handleChange} required rows={3}
                       placeholder="Explain your situation and why you need support..."
                       className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
                     />
                   </div>
+
+                  {/* Amount */}
                   <div className="sm:w-1/2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Amount Needed (PKR)</label>
                     <input
-                      type="number"
-                      name="amountNeeded"
-                      value={form.amountNeeded}
-                      onChange={handleChange}
-                      required
-                      min={100}
+                      type="number" name="amountNeeded" value={form.amountNeeded} onChange={handleChange} required min={100}
                       placeholder="e.g. 50000"
                       className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
+
+                  {/* Bank Account */}
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3">🏦 Bank Account Details <span className="text-gray-400 font-normal">(for receiving donations)</span></h4>
+                    <div className="grid sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Account Title</label>
+                        <input
+                          name="accountTitle" value={form.accountTitle} onChange={handleChange}
+                          placeholder="Your full name"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Account Number</label>
+                        <input
+                          name="accountNumber" value={form.accountNumber} onChange={handleChange}
+                          placeholder="e.g. 1234567890"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Bank Name</label>
+                        <input
+                          name="bankName" value={form.bankName} onChange={handleChange}
+                          placeholder="e.g. HBL, UBL, Meezan"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Fee Challan Upload */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Fee Challan <span className="text-red-500">*</span>
+                    </label>
+                    <p className="text-xs text-gray-400 mb-2">Upload your university fee challan as proof. JPG, PNG or PDF — max 5MB.</p>
+
+                    <div
+                      onClick={() => document.getElementById("challanInput").click()}
+                      className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition ${
+                        challanPreview ? "border-emerald-400 bg-emerald-50" : "border-gray-300 hover:border-emerald-400"
+                      }`}
+                    >
+                      {challanPreview ? (
+                        <div>
+                          <img src={challanPreview} alt="Challan preview" className="max-h-40 mx-auto rounded-lg mb-2 object-contain" />
+                          <p className="text-xs text-emerald-600 font-medium">{challanFile?.name}</p>
+                          <p className="text-xs text-gray-400 mt-1">Click to change</p>
+                        </div>
+                      ) : (
+                        <div>
+                          <div className="text-3xl mb-2">📄</div>
+                          <p className="text-sm text-gray-600 font-medium">Click to upload fee challan</p>
+                          <p className="text-xs text-gray-400 mt-1">JPG, PNG, PDF up to 5MB</p>
+                        </div>
+                      )}
+                    </div>
+                    <input
+                      id="challanInput"
+                      type="file"
+                      accept="image/jpeg,image/png,image/jpg,application/pdf"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                  </div>
+
                   <div className="flex justify-end">
                     <button
-                      type="submit"
-                      disabled={submitting}
+                      type="submit" disabled={submitting}
                       className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white text-sm font-semibold rounded-lg transition"
                     >
                       {submitting ? "Submitting..." : "Submit Request"}
@@ -261,15 +348,11 @@ export default function StudentDashboard() {
           <>
             <div className="mb-5">
               <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                type="text" value={search} onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search requests..."
                 className="w-full sm:w-80 px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
-              <p className="text-xs text-gray-400 mt-2">
-                💡 You can donate to other students' approved requests
-              </p>
+              <p className="text-xs text-gray-400 mt-2">💡 You can donate to other students' approved requests</p>
             </div>
             {loading ? (
               <div className="text-center py-16 text-gray-400">Loading...</div>
@@ -277,9 +360,7 @@ export default function StudentDashboard() {
               <div className="text-center py-16 text-gray-400">No approved requests from other students.</div>
             ) : (
               <div className="grid sm:grid-cols-2 gap-4">
-                {filtered.map((r) => (
-                  <RequestCard key={r._id} request={r} />
-                ))}
+                {filtered.map((r) => (<RequestCard key={r._id} request={r} />))}
               </div>
             )}
           </>
@@ -305,15 +386,9 @@ export default function StudentDashboard() {
                 <tbody>
                   {donations.map((d, i) => (
                     <tr key={d._id} className={i % 2 === 0 ? "" : "bg-gray-50"}>
-                      <td className="px-5 py-3 text-emerald-600 font-medium">
-                        {d.requestId?.title || "Request"}
-                      </td>
-                      <td className="px-5 py-3 text-right font-medium text-emerald-700">
-                        PKR {d.amount?.toLocaleString()}
-                      </td>
-                      <td className="px-5 py-3 text-right text-gray-400">
-                        {new Date(d.createdAt).toLocaleDateString()}
-                      </td>
+                      <td className="px-5 py-3 text-emerald-600 font-medium">{d.requestId?.title || "Request"}</td>
+                      <td className="px-5 py-3 text-right font-medium text-emerald-700">PKR {d.amount?.toLocaleString()}</td>
+                      <td className="px-5 py-3 text-right text-gray-400">{new Date(d.createdAt).toLocaleDateString()}</td>
                     </tr>
                   ))}
                 </tbody>
