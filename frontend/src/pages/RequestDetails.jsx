@@ -12,10 +12,14 @@ export default function RequestDetails() {
   const [donations, setDonations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [amount, setAmount] = useState("");
+  const [message, setMessage] = useState("");
+  const [proofFile, setProofFile] = useState(null);
+  const [proofPreview, setProofPreview] = useState(null);
   const [donating, setDonating] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [showChallan, setShowChallan] = useState(false);
+  const [viewingProof, setViewingProof] = useState(null);
 
   const loadRequest = async () => {
     try {
@@ -40,14 +44,44 @@ export default function RequestDetails() {
     loadDonations();
   }, [id]);
 
+  const handleProofFile = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProofFile(file);
+      setProofPreview(URL.createObjectURL(file));
+    }
+  };
+
   const handleDonate = async (e) => {
     e.preventDefault();
     setDonating(true);
     setError("");
+
     try {
-      await api.post("/donations", { requestId: id, amount: Number(amount) });
+      let paymentProofBase64 = null;
+
+      // Convert proof image to base64 if provided
+      if (proofFile) {
+        paymentProofBase64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(proofFile);
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+        });
+      }
+
+      await api.post("/donations", {
+        requestId: id,
+        amount: Number(amount),
+        message,
+        paymentProofBase64,
+      });
+
       setSuccess(`Thank you! PKR ${Number(amount).toLocaleString()} donated successfully.`);
       setAmount("");
+      setMessage("");
+      setProofFile(null);
+      setProofPreview(null);
       loadRequest();
       loadDonations();
     } catch (err) {
@@ -189,9 +223,9 @@ export default function RequestDetails() {
         {/* Bank Account Details */}
         {request.bankAccount?.accountNumber && request.status === "approved" && (
           <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
-            <h2 className="font-semibold text-gray-800 mb-4">🏦 Bank Account for Direct Transfer</h2>
+            <h2 className="font-semibold text-gray-800 mb-1">🏦 Bank Account for Direct Transfer</h2>
             <p className="text-xs text-gray-400 mb-4">
-              You can also transfer directly to the student's bank account as proof of donation.
+              Transfer directly to the student's bank account and upload screenshot as proof below.
             </p>
             <div className="grid grid-cols-3 gap-4">
               <div className="bg-gray-50 rounded-lg p-3">
@@ -200,7 +234,7 @@ export default function RequestDetails() {
               </div>
               <div className="bg-gray-50 rounded-lg p-3">
                 <p className="text-xs text-gray-400 mb-1">Account Number</p>
-                <p className="text-sm font-semibold text-gray-800">{request.bankAccount.accountNumber || "—"}</p>
+                <p className="text-sm font-semibold text-gray-800 break-all">{request.bankAccount.accountNumber || "—"}</p>
               </div>
               <div className="bg-gray-50 rounded-lg p-3">
                 <p className="text-xs text-gray-400 mb-1">Bank Name</p>
@@ -231,15 +265,16 @@ export default function RequestDetails() {
         {canDonate && (
           <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
             <h2 className="font-semibold text-gray-800 mb-1">Make a Donation</h2>
-            <p className="text-xs text-gray-400 mb-4">
-              {user.role === "student" ? "You are donating as a student" : "You are donating as a donor"}
+            <p className="text-xs text-gray-400 mb-5">
+              {user.role === "student" ? "You are donating as a student" : "You are donating as a donor"} — upload your payment screenshot as proof.
             </p>
 
             {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">{error}</div>}
             {success && <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-lg">{success}</div>}
 
-            <form onSubmit={handleDonate} className="flex gap-3">
-              <div className="flex-1">
+            <form onSubmit={handleDonate} className="space-y-4">
+              {/* Amount */}
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Amount (PKR)</label>
                 <input
                   type="number"
@@ -251,31 +286,88 @@ export default function RequestDetails() {
                   placeholder={`Max: PKR ${remaining.toLocaleString()}`}
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
+                {/* Quick amounts */}
+                <div className="flex gap-2 mt-2 flex-wrap">
+                  {[500, 1000, 5000, 10000].filter(amt => amt <= remaining).map((amt) => (
+                    <button
+                      key={amt}
+                      type="button"
+                      onClick={() => setAmount(amt)}
+                      className="px-3 py-1 text-xs border border-emerald-300 text-emerald-700 rounded-md hover:bg-emerald-50 transition"
+                    >
+                      PKR {amt.toLocaleString()}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="flex items-end">
-                <button
-                  type="submit"
-                  disabled={donating || remaining <= 0}
-                  className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white text-sm font-semibold rounded-lg transition"
-                >
-                  {donating ? "Processing..." : remaining <= 0 ? "Fully Funded" : "Donate"}
-                </button>
-              </div>
-            </form>
 
-            {/* Quick amounts */}
-            <div className="flex gap-2 mt-3 flex-wrap">
-              {[500, 1000, 5000, 10000].filter(amt => amt <= remaining).map((amt) => (
-                <button
-                  key={amt}
-                  type="button"
-                  onClick={() => setAmount(amt)}
-                  className="px-3 py-1 text-xs border border-emerald-300 text-emerald-700 rounded-md hover:bg-emerald-50 transition"
+              {/* Message */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Message <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="e.g. Best of luck with your studies!"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              {/* Payment Proof Upload */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Payment Screenshot <span className="text-gray-400 font-normal">(optional but recommended)</span>
+                </label>
+                <p className="text-xs text-gray-400 mb-2">
+                  Upload a screenshot of your bank transfer or payment app as proof of donation.
+                </p>
+                <div
+                  onClick={() => document.getElementById("proofInput").click()}
+                  className={`border-2 border-dashed rounded-lg p-5 text-center cursor-pointer transition ${
+                    proofPreview ? "border-emerald-400 bg-emerald-50" : "border-gray-300 hover:border-emerald-400"
+                  }`}
                 >
-                  PKR {amt.toLocaleString()}
-                </button>
-              ))}
-            </div>
+                  {proofPreview ? (
+                    <div>
+                      <img src={proofPreview} alt="Payment proof" className="max-h-40 mx-auto rounded-lg mb-2 object-contain" />
+                      <p className="text-xs text-emerald-600 font-medium">{proofFile?.name}</p>
+                      <p className="text-xs text-gray-400 mt-1">Click to change</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="text-3xl mb-2">📸</div>
+                      <p className="text-sm text-gray-600 font-medium">Click to upload payment screenshot</p>
+                      <p className="text-xs text-gray-400 mt-1">JPG, PNG up to 5MB</p>
+                    </div>
+                  )}
+                </div>
+                <input
+                  id="proofInput"
+                  type="file"
+                  accept="image/jpeg,image/png,image/jpg"
+                  onChange={handleProofFile}
+                  className="hidden"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={donating || remaining <= 0}
+                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white text-sm font-semibold rounded-lg transition flex items-center justify-center gap-2"
+              >
+                {donating ? (
+                  <>
+                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    </svg>
+                    Processing...
+                  </>
+                ) : remaining <= 0 ? "Fully Funded" : "💛 Donate Now"}
+              </button>
+            </form>
           </div>
         )}
 
@@ -286,33 +378,78 @@ export default function RequestDetails() {
           </div>
         )}
 
-        {/* Donations List */}
+        {/* Donations List with proof */}
         {donations.length > 0 && (
           <div className="bg-white border border-gray-200 rounded-2xl p-6">
             <h2 className="font-semibold text-gray-800 mb-4">
               Donations ({donations.length})
             </h2>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {donations.map((d) => (
-                <div key={d._id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-xs font-semibold">
-                      {d.donorId?.name?.[0]?.toUpperCase() || "?"}
+                <div key={d._id} className="border border-gray-100 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-xs font-semibold">
+                        {d.donorId?.name?.[0]?.toUpperCase() || "?"}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-800">{d.donorId?.name || "Anonymous"}</p>
+                        <p className="text-xs text-gray-400">{new Date(d.createdAt).toLocaleDateString()}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-800">{d.donorId?.name || "Anonymous"}</p>
-                      <p className="text-xs text-gray-400">{new Date(d.createdAt).toLocaleDateString()}</p>
-                    </div>
+                    <span className="text-sm font-semibold text-emerald-600">
+                      PKR {d.amount?.toLocaleString()}
+                    </span>
                   </div>
-                  <span className="text-sm font-semibold text-emerald-600">
-                    PKR {d.amount?.toLocaleString()}
-                  </span>
+
+                  {/* Donor message */}
+                  {d.message && (
+                    <p className="text-xs text-gray-500 italic mb-2 pl-11">"{d.message}"</p>
+                  )}
+
+                  {/* Payment proof */}
+                  {d.paymentProof && (
+                    <div className="pl-11">
+                      <button
+                        onClick={() => setViewingProof(viewingProof === d._id ? null : d._id)}
+                        className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+                      >
+                        📸 {viewingProof === d._id ? "Hide payment proof ▲" : "View payment proof ▼"}
+                      </button>
+                      {viewingProof === d._id && (
+                        <div className="mt-2">
+                          <img
+                            src={d.paymentProof}
+                            alt="Payment proof"
+                            className="max-h-48 rounded-lg border border-gray-200 object-contain"
+                          />
+                          <a
+                            href={d.paymentProof}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-block mt-1 text-xs text-blue-600 hover:underline"
+                          >
+                            🔗 Open full image
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* No proof badge */}
+                  {!d.paymentProof && (
+                    <div className="pl-11">
+                      <span className="text-xs text-gray-400">No payment proof uploaded</span>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           </div>
         )}
       </div>
+
+      {/* Challan fullscreen - removed, using inline expand instead */}
     </div>
   );
 }
