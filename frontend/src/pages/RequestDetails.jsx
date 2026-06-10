@@ -35,7 +35,7 @@ export default function RequestDetails() {
   const loadDonations = async () => {
     try {
       const { data } = await api.get(`/donations/request/${id}`);
-      setDonations(data);
+      setDonations(Array.isArray(data) ? data : []);
     } catch {}
   };
 

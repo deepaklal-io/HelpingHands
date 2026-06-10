@@ -36,7 +36,7 @@ export default function Home() {
 
   useEffect(() => {
     api.get("/requests/approved")
-      .then(({ data }) => setRequests(data))
+      .then(({ data }) => setRequests(Array.isArray(data) ? data : []))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);

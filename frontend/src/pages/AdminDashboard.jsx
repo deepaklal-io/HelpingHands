@@ -18,8 +18,8 @@ export default function AdminDashboard() {
         api.get("/requests"),
         api.get("/admin/users"),
       ]);
-      setRequests(reqRes.data);
-      setUsers(usersRes.data);
+      setRequests(Array.isArray(reqRes.data) ? reqRes.data : []);
+      setUsers(Array.isArray(usersRes.data) ? usersRes.data : []);
     } catch {
       setError("Failed to load admin data.");
     } finally {

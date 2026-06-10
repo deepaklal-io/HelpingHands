@@ -19,8 +19,8 @@ export default function DonorDashboard() {
           api.get("/requests/approved"),
           api.get("/donations/my"),
         ]);
-        setRequests(reqRes.data);
-        setDonations(donRes.data);
+        setRequests(Array.isArray(reqRes.data) ? reqRes.data : []);
+        setDonations(Array.isArray(donRes.data) ? donRes.data : []);
       } catch {
         setError("Failed to load data.");
       } finally {
