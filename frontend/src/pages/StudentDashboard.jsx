@@ -133,16 +133,33 @@ const fetchMyDonations = async () => {
     totalDonated: donations.reduce((s, d) => s + (d.amount || 0), 0),
   };
 
-  const filtered = allRequests.filter((r) =>
-    r.title.toLowerCase().includes(search.toLowerCase()) ||
-    r.description.toLowerCase().includes(search.toLowerCase())
-  );
+ const filtered = allRequests.filter((r) =>
+  (r?.title || "").toLowerCase().includes(search.toLowerCase()) ||
+  (r?.description || "").toLowerCase().includes(search.toLowerCase())
+);
 
   const tabs = [
     { key: "my", label: "My Requests" },
     { key: "browse", label: "Browse & Donate" },
     { key: "donated", label: "My Donations" },
   ];
+
+  const safeRequests = Array.isArray(requests) ? requests : [];
+  const safeAllRequests = Array.isArray(allRequests) ? allRequests : [];
+  const safeDonations = Array.isArray(donations) ? donations : [];
+
+  const safeStats = {
+    total: safeRequests.length,
+    approved: safeRequests.filter((r) => r.status === "approved").length,
+    completed: safeRequests.filter((r) => r.status === "completed").length,
+    totalRaised: safeRequests.reduce((s, r) => s + (r.receivedAmount || 0), 0),
+    totalDonated: safeDonations.reduce((s, d) => s + (d.amount || 0), 0),
+  };
+
+  const safeFiltered = safeAllRequests.filter((r) =>
+    (r.title || "").toLowerCase().includes(search.toLowerCase()) ||
+    (r.description || "").toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -170,11 +187,11 @@ const fetchMyDonations = async () => {
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-8">
           {[
-            { label: "My Requests", value: stats.total },
-            { label: "Approved", value: stats.approved },
-            { label: "Completed", value: stats.completed },
-            { label: "Total Raised", value: `PKR ${stats.totalRaised.toLocaleString()}` },
-            { label: "I Donated", value: `PKR ${stats.totalDonated.toLocaleString()}` },
+            { label: "My Requests", value: safeStats.total },
+            { label: "Approved", value: safeStats.approved },
+            { label: "Completed", value: safeStats.completed },
+            { label: "Total Raised", value: `PKR ${safeStats.totalRaised.toLocaleString()}` },
+            { label: "I Donated", value: `PKR ${safeStats.totalDonated.toLocaleString()}` },
           ].map((s) => (
             <div key={s.label} className="bg-white border border-gray-200 rounded-xl p-4 text-center">
               <p className="text-xl font-bold text-emerald-600">{s.value}</p>
@@ -335,14 +352,14 @@ const fetchMyDonations = async () => {
             {/* My Requests List */}
             {loading ? (
               <div className="text-center py-16 text-gray-400">Loading...</div>
-            ) : requests.length === 0 ? (
+            ) : safeRequests.length === 0 ? (
               <div className="text-center py-16 bg-white border border-dashed border-gray-300 rounded-xl text-gray-400">
                 <p className="text-lg mb-1">No requests yet</p>
                 <p className="text-sm">Click "New Request" to get started</p>
               </div>
             ) : (
               <div className="grid sm:grid-cols-2 gap-4">
-                {requests.map((r) => (
+                {safeRequests.map((r) => (
                   <RequestCard key={r._id} request={r} showActions onDelete={handleDelete} />
                 ))}
               </div>
@@ -363,11 +380,11 @@ const fetchMyDonations = async () => {
             </div>
             {loading ? (
               <div className="text-center py-16 text-gray-400">Loading...</div>
-            ) : filtered.length === 0 ? (
+            ) : safeFiltered.length === 0 ? (
               <div className="text-center py-16 text-gray-400">No approved requests from other students.</div>
             ) : (
               <div className="grid sm:grid-cols-2 gap-4">
-                {filtered.map((r) => (<RequestCard key={r._id} request={r} />))}
+                {safeFiltered.map((r) => (<RequestCard key={r._id} request={r} />))}
               </div>
             )}
           </>
@@ -376,7 +393,7 @@ const fetchMyDonations = async () => {
         {/* MY DONATIONS TAB */}
         {tab === "donated" && (
           <div className="bg-white border border-gray-200 rounded-xl overflow-x-auto">
-            {donations.length === 0 ? (
+            {safeDonations.length === 0 ? (
               <div className="text-center py-16 text-gray-400">
                 <p className="text-lg mb-1">No donations yet</p>
                 <p className="text-sm">Go to "Browse & Donate" to support a fellow student</p>
@@ -391,7 +408,7 @@ const fetchMyDonations = async () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {donations.map((d, i) => (
+                  {safeDonations.map((d, i) => (
                     <tr key={d._id} className={i % 2 === 0 ? "" : "bg-gray-50"}>
                       <td className="px-5 py-3 text-emerald-600 font-medium">{d.requestId?.title || "Request"}</td>
                       <td className="px-5 py-3 text-right font-medium text-emerald-700">PKR {d.amount?.toLocaleString()}</td>
