@@ -371,7 +371,7 @@ const fetchMyDonations = async () => {
           </>
         )}
 
-        {/* BROWSE & DONATE TAB */}
+        
         {tab === "browse" && (
           <>
             <div className="mb-5">
