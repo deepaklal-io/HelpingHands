@@ -19,14 +19,20 @@ const donationSchema = new mongoose.Schema(
       required: true,
     },
 
+    // ✅ Payment proof screenshot
+    paymentProof: {
+      type: String,
+      default: null,
+    },
 
+    message: {
+      type: String,
+      default: "",
+    },
   },
   {
     timestamps: true,
   }
 );
 
-export default mongoose.model(
-  "Donation",
-  donationSchema
-);
+export default mongoose.model("Donation", donationSchema);
