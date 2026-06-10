@@ -1,6 +1,6 @@
 import Donation from "../models/Donation.js";
 import HelpRequest from "../models/HelpRequest.js";
-import { cloudinary } from "../middleware/uploadMiddleware.js";
+import cloudinary from "../utils/cloudinary.js";
 
 export const createDonation = async (req, res) => {
   try {
