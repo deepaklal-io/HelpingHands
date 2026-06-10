@@ -9,6 +9,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [actionMsg, setActionMsg] = useState("");
+  const [selectedRequest, setSelectedRequest] = useState(null); // for modal
 
   const fetchData = async () => {
     setLoading(true);
@@ -33,7 +34,8 @@ export default function AdminDashboard() {
   const handleApprove = async (id) => {
     try {
       await api.patch(`/requests/${id}/approve`);
-      flash("Request approved.");
+      flash("✅ Request approved.");
+      setSelectedRequest(null);
       fetchData();
     } catch { setError("Failed to approve request."); }
   };
@@ -41,7 +43,8 @@ export default function AdminDashboard() {
   const handleReject = async (id) => {
     try {
       await api.patch(`/requests/${id}/reject`);
-      flash("Request rejected.");
+      flash("❌ Request rejected.");
+      setSelectedRequest(null);
       fetchData();
     } catch { setError("Failed to reject request."); }
   };
@@ -55,7 +58,6 @@ export default function AdminDashboard() {
     } catch { setError("Failed to delete user."); }
   };
 
-  // Computed stats from live data
   const stats = [
     { label: "Total Users", value: users.length },
     { label: "Total Requests", value: requests.length },
@@ -119,12 +121,13 @@ export default function AdminDashboard() {
           <div className="text-center py-16 text-gray-400">Loading...</div>
         ) : tab === "requests" ? (
           <div className="bg-white border border-gray-200 rounded-xl overflow-x-auto">
-              <table className="w-full text-sm min-w-[600px]">
+            <table className="w-full text-sm min-w-[600px]">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="text-left px-5 py-3 text-gray-600 font-medium">Title</th>
                   <th className="text-left px-5 py-3 text-gray-600 font-medium">Student</th>
-                  <th className="text-right px-5 py-3 text-gray-600 font-medium">Amount Needed</th>
+                  <th className="text-right px-5 py-3 text-gray-600 font-medium">Amount</th>
+                  <th className="text-center px-5 py-3 text-gray-600 font-medium">Challan</th>
                   <th className="text-center px-5 py-3 text-gray-600 font-medium">Status</th>
                   <th className="text-center px-5 py-3 text-gray-600 font-medium">Actions</th>
                 </tr>
@@ -132,9 +135,24 @@ export default function AdminDashboard() {
               <tbody>
                 {requests.map((r, i) => (
                   <tr key={r._id} className={i % 2 === 0 ? "" : "bg-gray-50"}>
-                    <td className="px-5 py-3 text-gray-800 font-medium max-w-[180px] truncate">{r.title}</td>
-                    <td className="px-5 py-3 text-gray-500">{r.studentId?.name || "—"}</td>
+                    <td className="px-5 py-3 text-gray-800 font-medium max-w-[160px] truncate">{r.title}</td>
+                    <td className="px-5 py-3">
+                      <p className="text-gray-800 text-xs font-medium">{r.studentId?.name || "—"}</p>
+                      <p className="text-gray-400 text-xs">{r.studentId?.email || ""}</p>
+                    </td>
                     <td className="px-5 py-3 text-right text-gray-700">PKR {r.amountNeeded?.toLocaleString()}</td>
+                    <td className="px-5 py-3 text-center">
+                      {r.challanImage ? (
+                        <button
+                          onClick={() => setSelectedRequest(r)}
+                          className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition"
+                        >
+                          👁 View
+                        </button>
+                      ) : (
+                        <span className="text-xs text-gray-400">No challan</span>
+                      )}
+                    </td>
                     <td className="px-5 py-3 text-center">
                       <span className={statusBadge(r.status)}>{r.status}</span>
                     </td>
@@ -145,13 +163,18 @@ export default function AdminDashboard() {
                           <button onClick={() => handleReject(r._id)} className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition">Reject</button>
                         </div>
                       ) : (
-                        <span className="text-gray-400 text-xs">—</span>
+                        <button
+                          onClick={() => setSelectedRequest(r)}
+                          className="px-3 py-1 text-xs border border-gray-300 text-gray-600 rounded-md hover:bg-gray-100 transition"
+                        >
+                          Details
+                        </button>
                       )}
                     </td>
                   </tr>
                 ))}
                 {requests.length === 0 && (
-                  <tr><td colSpan={5} className="text-center py-10 text-gray-400">No requests found.</td></tr>
+                  <tr><td colSpan={6} className="text-center py-10 text-gray-400">No requests found.</td></tr>
                 )}
               </tbody>
             </table>
@@ -188,6 +211,123 @@ export default function AdminDashboard() {
           </div>
         )}
       </div>
+
+      {/* Request Detail Modal */}
+      {selectedRequest && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4 py-8">
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between p-6 border-b border-gray-200">
+              <div>
+                <h3 className="font-bold text-gray-800 text-lg">{selectedRequest.title}</h3>
+                <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium capitalize mt-1 inline-block ${
+                  selectedRequest.status === "pending" ? "bg-yellow-100 text-yellow-700" :
+                  selectedRequest.status === "approved" ? "bg-emerald-100 text-emerald-700" :
+                  selectedRequest.status === "rejected" ? "bg-red-100 text-red-700" :
+                  "bg-blue-100 text-blue-700"
+                }`}>{selectedRequest.status}</span>
+              </div>
+              <button onClick={() => setSelectedRequest(null)} className="text-gray-400 hover:text-gray-700 text-xl font-bold">✕</button>
+            </div>
+
+            <div className="p-6 space-y-5">
+              {/* Student Info */}
+              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <div className="w-10 h-10 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center font-bold">
+                  {selectedRequest.studentId?.name?.[0]?.toUpperCase()}
+                </div>
+                <div>
+                  <p className="font-medium text-gray-800 text-sm">{selectedRequest.studentId?.name}</p>
+                  <p className="text-xs text-gray-500">{selectedRequest.studentId?.email}</p>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Description</p>
+                <p className="text-sm text-gray-700 leading-relaxed">{selectedRequest.description}</p>
+              </div>
+
+              {/* Amount */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-xs text-gray-500 mb-1">Amount Needed</p>
+                  <p className="font-bold text-emerald-600">PKR {selectedRequest.amountNeeded?.toLocaleString()}</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-xs text-gray-500 mb-1">Amount Received</p>
+                  <p className="font-bold text-blue-600">PKR {(selectedRequest.receivedAmount || 0).toLocaleString()}</p>
+                </div>
+              </div>
+
+              {/* Bank Account */}
+              {selectedRequest.bankAccount?.accountNumber && (
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <p className="text-xs font-semibold text-gray-500 uppercase mb-3">🏦 Bank Account Details</p>
+                  <div className="grid grid-cols-3 gap-3 text-sm">
+                    <div>
+                      <p className="text-xs text-gray-400 mb-0.5">Account Title</p>
+                      <p className="font-medium text-gray-800">{selectedRequest.bankAccount.accountTitle || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 mb-0.5">Account Number</p>
+                      <p className="font-medium text-gray-800">{selectedRequest.bankAccount.accountNumber || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 mb-0.5">Bank Name</p>
+                      <p className="font-medium text-gray-800">{selectedRequest.bankAccount.bankName || "—"}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Challan Image */}
+              {selectedRequest.challanImage ? (
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase mb-2">📄 Fee Challan</p>
+                  <div className="border border-gray-200 rounded-lg overflow-hidden">
+                    <img
+                      src={selectedRequest.challanImage}
+                      alt="Fee Challan"
+                      className="w-full object-contain max-h-80"
+                    />
+                  </div>
+                  <a
+                    href={selectedRequest.challanImage}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-block mt-2 text-xs text-blue-600 hover:underline"
+                  >
+                    🔗 Open full image in new tab
+                  </a>
+                </div>
+              ) : (
+                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-700 text-sm">
+                  ⚠️ No fee challan uploaded for this request.
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              {selectedRequest.status === "pending" && (
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => handleApprove(selectedRequest._id)}
+                    className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm rounded-lg transition"
+                  >
+                    ✅ Approve Request
+                  </button>
+                  <button
+                    onClick={() => handleReject(selectedRequest._id)}
+                    className="flex-1 py-2.5 bg-red-100 hover:bg-red-200 text-red-700 font-semibold text-sm rounded-lg transition"
+                  >
+                    ❌ Reject Request
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

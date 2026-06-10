@@ -15,6 +15,7 @@ export default function RequestDetails() {
   const [donating, setDonating] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showChallan, setShowChallan] = useState(false);
 
   const loadRequest = async () => {
     try {
@@ -77,12 +78,10 @@ export default function RequestDetails() {
   const progress = Math.min(Math.round(((request.receivedAmount || 0) / request.amountNeeded) * 100), 100);
   const remaining = request.amountNeeded - (request.receivedAmount || 0);
 
-  // Check if current user is the owner of this request
   const isOwner = user && request.studentId &&
     (request.studentId._id?.toString() === user.id ||
      request.studentId._id?.toString() === user._id);
 
-  // Show donate form if: logged in, request is approved, and not the owner
   const canDonate = user && request.status === "approved" && !isOwner;
 
   const statusColors = {
@@ -134,7 +133,7 @@ export default function RequestDetails() {
           )}
 
           {/* Progress */}
-          <div className="mb-2">
+          <div className="mb-4">
             <div className="flex justify-between text-sm font-medium text-gray-700 mb-2">
               <span>PKR {(request.receivedAmount || 0).toLocaleString()} raised</span>
               <span className="text-emerald-600">{progress}%</span>
@@ -147,7 +146,69 @@ export default function RequestDetails() {
               {remaining > 0 && <span>PKR {remaining.toLocaleString()} remaining</span>}
             </div>
           </div>
+
+          {/* Fee Challan */}
+          {request.challanImage && (
+            <div className="mt-4 border border-gray-200 rounded-xl overflow-hidden">
+              <div
+                className="flex items-center justify-between px-4 py-3 bg-gray-50 cursor-pointer"
+                onClick={() => setShowChallan(!showChallan)}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">📄</span>
+                  <div>
+                    <p className="text-sm font-medium text-gray-800">Fee Challan</p>
+                    <p className="text-xs text-gray-400">Verified proof of financial need</p>
+                  </div>
+                </div>
+                <span className="text-xs text-emerald-600 font-medium">
+                  {showChallan ? "Hide ▲" : "View ▼"}
+                </span>
+              </div>
+              {showChallan && (
+                <div className="p-4 bg-white">
+                  <img
+                    src={request.challanImage}
+                    alt="Fee Challan"
+                    className="w-full object-contain max-h-96 rounded-lg border border-gray-100"
+                  />
+                  <a
+                    href={request.challanImage}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-block mt-2 text-xs text-blue-600 hover:underline"
+                  >
+                    🔗 Open full image in new tab
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
         </div>
+
+        {/* Bank Account Details */}
+        {request.bankAccount?.accountNumber && request.status === "approved" && (
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
+            <h2 className="font-semibold text-gray-800 mb-4">🏦 Bank Account for Direct Transfer</h2>
+            <p className="text-xs text-gray-400 mb-4">
+              You can also transfer directly to the student's bank account as proof of donation.
+            </p>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="bg-gray-50 rounded-lg p-3">
+                <p className="text-xs text-gray-400 mb-1">Account Title</p>
+                <p className="text-sm font-semibold text-gray-800">{request.bankAccount.accountTitle || "—"}</p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <p className="text-xs text-gray-400 mb-1">Account Number</p>
+                <p className="text-sm font-semibold text-gray-800">{request.bankAccount.accountNumber || "—"}</p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <p className="text-xs text-gray-400 mb-1">Bank Name</p>
+                <p className="text-sm font-semibold text-gray-800">{request.bankAccount.bankName || "—"}</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Owner message */}
         {isOwner && (
@@ -166,7 +227,7 @@ export default function RequestDetails() {
           </div>
         )}
 
-        {/* Donate Form — for donors AND students (not own request) */}
+        {/* Donate Form */}
         {canDonate && (
           <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
             <h2 className="font-semibold text-gray-800 mb-1">Make a Donation</h2>
