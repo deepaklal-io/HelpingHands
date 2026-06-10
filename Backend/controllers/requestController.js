@@ -39,9 +39,6 @@ export const createRequest = async (req, res) => {
         accountTitle: accountTitle || "",
         accountNumber: accountNumber || "",
         bankName: bankName || "",
-        documents: req.files.map(
-  (file) => file.path
-),
       },
     });
 

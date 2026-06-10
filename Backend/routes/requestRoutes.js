@@ -6,7 +6,6 @@ import {
 } from "../controllers/requestController.js";
 import { protect } from "../middleware/authMiddleware.js";
 import { adminOnly } from "../middleware/adminMiddleware.js";
-import upload from "../middleware/uploadMiddleware.js";
 
 const router = express.Router();
 
@@ -17,7 +16,6 @@ router.patch("/:id/reject",  protect, adminOnly, rejectRequest);
 router.post(
   "/",
   protect,
-  upload.array("documents", 5),
   createRequest
 );
 router.get("/my",   protect, getMyRequests);
