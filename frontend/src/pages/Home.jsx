@@ -244,7 +244,7 @@ export default function Home() {
             </div>
             <span className="font-medium text-gray-700">Helping Hands</span>
           </div>
-          <p>© 2024 Helping Hands. Made with ❤️ for Pakistani students.</p>
+          <p>© 2026 Helping Hands. Made with ❤️ for Pakistani students.</p>
           <div className="flex gap-4">
             <Link to="/login" className="hover:text-gray-800 transition">Sign In</Link>
             <Link to="/register" className="hover:text-gray-800 transition">Register</Link>
