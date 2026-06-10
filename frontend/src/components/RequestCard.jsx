@@ -29,16 +29,27 @@ export default function RequestCard({ request, showActions, onDelete }) {
 
       <p className="text-sm text-gray-500 mb-4 line-clamp-2">{description}</p>
 
-      <div className="mb-4">
-        <div className="flex justify-between text-xs text-gray-500 mb-1">
-          <span>PKR {(receivedAmount || 0).toLocaleString()} raised</span>
-          <span>{progress}%</span>
-        </div>
-        <div className="w-full bg-gray-100 rounded-full h-2">
-          <div className="bg-emerald-500 h-2 rounded-full transition-all" style={{ width: `${progress}%` }} />
-        </div>
-        <p className="text-xs text-gray-400 mt-1">Goal: PKR {amountNeeded?.toLocaleString()}</p>
-      </div>
+     <div className="mb-4">
+  <div className="flex justify-between text-xs text-gray-500 mb-1">
+    <span>PKR {(receivedAmount || 0).toLocaleString()} raised</span>
+    <span>{progress}%</span>
+  </div>
+
+  <div className="w-full bg-gray-100 rounded-full h-2">
+    <div
+      className="bg-emerald-500 h-2 rounded-full transition-all"
+      style={{ width: `${progress}%` }}
+    />
+  </div>
+
+  <p className="text-xs text-gray-400 mt-1">
+    Goal: PKR {amountNeeded?.toLocaleString()}
+  </p>
+
+  <p className="text-xs text-gray-400 mt-1">
+    Remaining: PKR {(amountNeeded - (receivedAmount || 0)).toLocaleString()}
+  </p>
+</div>
 
       <div className="flex gap-2">
         <Link
