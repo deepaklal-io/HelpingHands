@@ -363,7 +363,7 @@ const fetchMyDonations = async () => {
               </div>
             ) : (
               <div className="grid sm:grid-cols-2 gap-4">
-                {safeRequests.map((r) => (
+                {requests?.filter(Boolean).map((r) => (
                   <RequestCard key={r._id} request={r} showActions onDelete={handleDelete} />
                 ))}
               </div>
