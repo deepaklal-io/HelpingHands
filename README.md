@@ -1,17 +1,51 @@
 # 🤝 Helping Hands — University Donation Platform
 
-A full-stack web application that connects financially struggling university students with donors willing to support their educational needs.
+A full-stack web application that connects financially struggling university students with donors willing to support their educational needs. Built with React, Node.js, MongoDB, and deployed on Vercel.
+
+🌐 **Live Demo:** [helping-hands-iba.vercel.app](https://helping-hands-iba.vercel.app)
 
 ---
 
 ## 📌 Features
 
-- 🎓 **Students** can create funding requests for tuition, books, medical, and more
-- 💛 **Donors** can browse approved requests and donate
-- 🛡️ **Admin** can approve/reject requests and manage users
-- 🔐 JWT-based authentication with role-based access
-- 📧 University email validation for students (`.edu.pk` only)
-- 📊 Real-time funding progress tracking
+### 🏠 Public Home Page
+- Hero section with platform statistics
+- Browse all approved student requests
+- Search and filter by category (Tuition, Books, Medical, etc.)
+- How it works section
+- No login required to browse
+
+### 🎓 Student Features
+- Register with university email (`.edu.pk` only)
+- Submit funding requests with:
+  - Title, description, category, amount needed
+  - 📄 Fee challan upload (proof of financial need)
+  - 🏦 Bank account details for direct transfers
+- Track received donations and funding progress
+- Browse and donate to other students' requests
+- View donation history
+
+### 💛 Donor Features
+- Register with any email
+- Browse all approved student requests
+- View fee challan as proof before donating
+- Donate with optional message
+- Upload payment screenshot as proof of donation
+- Track complete donation history
+
+### 🛡️ Admin Features
+- Approve or reject student requests
+- View fee challan image before approving
+- View bank account details of students
+- Manage all users
+- Platform statistics dashboard
+
+### 🔐 Security
+- JWT authentication
+- Role-based access control (Student / Donor / Admin)
+- University email validation for students
+- Protected routes
+- Ownership validation
 
 ---
 
@@ -23,6 +57,8 @@ A full-stack web application that connects financially struggling university stu
 | Backend | Node.js, Express.js |
 | Database | MongoDB, Mongoose |
 | Auth | JWT, bcrypt.js |
+| File Storage | Cloudinary |
+| Deployment | Vercel (Frontend + Backend) |
 
 ---
 
@@ -31,20 +67,50 @@ A full-stack web application that connects financially struggling university stu
 ```
 HelpingHands/
 ├── Backend/
+│   ├── config/
+│   │   └── db.js
 │   ├── controllers/
+│   │   ├── authController.js
+│   │   ├── requestController.js
+│   │   ├── donationController.js
+│   │   └── adminController.js
 │   ├── middleware/
+│   │   ├── authMiddleware.js
+│   │   └── adminMiddleware.js
 │   ├── models/
+│   │   ├── User.js
+│   │   ├── HelpRequest.js
+│   │   └── Donation.js
 │   ├── routes/
+│   │   ├── authRoutes.js
+│   │   ├── requestRoutes.js
+│   │   ├── donationRoutes.js
+│   │   ├── adminRoutes.js
+│   │   └── userRoutes.js
 │   ├── utils/
-│   ├── .env
+│   │   ├── cloudinary.js
+│   │   └── createAdmin.js
+│   ├── .env.example
+│   ├── vercel.json
 │   └── server.js
 │
 └── frontend/
     ├── src/
     │   ├── api/
+    │   │   └── axios.js
     │   ├── components/
+    │   │   ├── Navbar.jsx
+    │   │   ├── ProtectedRoute.jsx
+    │   │   └── RequestCard.jsx
     │   └── pages/
-    ├── index.html
+    │       ├── Home.jsx
+    │       ├── Login.jsx
+    │       ├── Register.jsx
+    │       ├── StudentDashboard.jsx
+    │       ├── DonorDashboard.jsx
+    │       ├── AdminDashboard.jsx
+    │       └── RequestDetails.jsx
+    ├── vercel.json
     └── vite.config.js
 ```
 
@@ -52,11 +118,12 @@ HelpingHands/
 
 ## ⚙️ Prerequisites
 
-Make sure you have these installed before running the project:
+Make sure you have these installed:
 
 - [Node.js](https://nodejs.org/) v18 or higher
-- [MongoDB](https://www.mongodb.com/try/download/community) local OR a [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) account
+- [MongoDB](https://www.mongodb.com/try/download/community) local OR [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) account
 - [Git](https://git-scm.com/)
+- [Cloudinary](https://cloudinary.com/) account (free)
 
 ---
 
@@ -78,17 +145,16 @@ cd Backend
 npm install
 ```
 
-Create a `.env` file inside the `Backend/` folder:
+Create a `.env` file inside the `Backend/` folder (see `.env.example`):
 
 ```env
 PORT=4500
-MONGO_URL=your_mongodb_connection_string
+MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_secret_key_here
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
 ```
-
-> **MongoDB URI examples:**
-> - Local: `mongodb://localhost:27017/helpinghands`
-> - Atlas: `mongodb+srv://username:password@cluster.mongodb.net/helpinghands`
 
 Start the backend server:
 
@@ -106,25 +172,30 @@ MongoDB connected
 
 ### 3. Setup the Frontend
 
-Open a **new terminal** and run:
+Open a **new terminal**:
 
 ```bash
 cd frontend
 npm install
+```
+
+Create `frontend/.env`:
+```env
+VITE_API_URL=http://localhost:4500/api
+```
+
+Start the frontend:
+```bash
 npm run dev
 ```
 
-You should see:
-```
-VITE ready
-Local: http://localhost:5173/
-```
+Open `http://localhost:5173` in your browser.
 
 ---
 
 ### 4. Create the Admin Account
 
-The admin cannot register through the UI. Run this one-time script:
+Run this one-time script to create an admin:
 
 ```bash
 cd Backend
@@ -138,7 +209,7 @@ Email: admin@helpinghands.com
 Password: admin123
 ```
 
-> Run this **once only**. The admin is saved permanently in your database.
+> Run this **once only**.
 
 ---
 
@@ -155,24 +226,34 @@ Password: admin123
 ## 📋 How to Use
 
 ### As a Student
-1. Register with your **university email** — must end in `.edu.pk`
-2. Login → redirected to Student Dashboard
-3. Create a funding request with title, category, description, and amount
+1. Register with your **university email** (must end in `.edu.pk`)
+2. Login → Student Dashboard
+3. Click **"New Request"** and fill:
+   - Title, category, description, amount needed
+   - Bank account details (for receiving donations)
+   - Upload your **fee challan** as proof
 4. Wait for admin approval
-5. Track donations received on your request
+5. Track donations and funding progress
+6. Browse other students' requests and donate to them
 
 ### As a Donor
 1. Register with any email
-2. Login → redirected to Donor Dashboard
-3. Browse all approved student requests
-4. Click a request and donate any amount
-5. View your donation history in the "My Donations" tab
+2. Login → Donor Dashboard
+3. Browse approved requests
+4. Click a request → view fee challan as proof
+5. See student's bank account for direct transfer
+6. Enter amount, optional message, upload payment screenshot
+7. Track donation history
 
 ### As an Admin
 1. Login with admin credentials
-2. View all requests in the Admin Dashboard
-3. Approve or Reject pending requests
-4. Manage users in the Users tab
+2. Admin Dashboard → view all pending requests
+3. Click **"View"** to see full request details including:
+   - Student info
+   - Fee challan image
+   - Bank account details
+4. **Approve** or **Reject** the request
+5. Manage users in the Users tab
 
 ---
 
@@ -181,8 +262,8 @@ Password: admin123
 ### Auth
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/auth/register` | Register a new user |
-| POST | `/api/auth/login` | Login and get JWT token |
+| POST | `/api/auth/register` | Register (students need .edu.pk email) |
+| POST | `/api/auth/login` | Login, returns JWT token |
 
 ### Requests
 | Method | Endpoint | Access | Description |
@@ -191,7 +272,7 @@ Password: admin123
 | GET | `/api/requests/approved` | Public | Get approved requests |
 | GET | `/api/requests/my` | Student | Get my requests |
 | GET | `/api/requests/:id` | All | Get request by ID |
-| POST | `/api/requests` | Student | Create a request |
+| POST | `/api/requests` | Student | Create request with challan |
 | PATCH | `/api/requests/:id/approve` | Admin | Approve a request |
 | PATCH | `/api/requests/:id/reject` | Admin | Reject a request |
 | DELETE | `/api/requests/:id` | Student | Delete own request |
@@ -199,8 +280,9 @@ Password: admin123
 ### Donations
 | Method | Endpoint | Access | Description |
 |--------|----------|--------|-------------|
-| POST | `/api/donations` | Donor | Make a donation |
-| GET | `/api/donations/my` | Donor | Get my donations |
+| POST | `/api/donations` | Auth | Donate with optional payment proof |
+| GET | `/api/donations/my` | Auth | Get my donations |
+| GET | `/api/donations/request/:id` | Auth | Get donations for a request |
 
 ### Admin
 | Method | Endpoint | Access | Description |
@@ -213,43 +295,20 @@ Password: admin123
 
 ## 🔒 Environment Variables
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `PORT` | Backend server port | `4500` |
-| `MONGO_URL` | MongoDB connection string | `mongodb://localhost:27017/helpinghands` |
-| `JWT_SECRET` | Secret key for JWT tokens | `mysecretkey123` |
+### Backend `.env`
+| Variable | Description |
+|----------|-------------|
+| `PORT` | Server port (default 4500) |
+| `MONGO_URI` | MongoDB connection string |
+| `JWT_SECRET` | Secret key for JWT tokens |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name |
+| `CLOUDINARY_API_KEY` | Cloudinary API key |
+| `CLOUDINARY_API_SECRET` | Cloudinary API secret |
 
-For the frontend API client, set `VITE_API_BASE_URL` if your backend is not running at `http://localhost:4500/api`.
-
----
-
-## ❗ Common Issues & Fixes
-
-**CORS Error in browser**
-
-Add this to your `Backend/server.js`:
-```js
-import cors from "cors";
-app.use(cors({ origin: "http://localhost:5173" }));
-```
-Install if needed:
-```bash
-npm install cors
-```
-
-**MongoDB not connecting**
-- Make sure MongoDB is running locally
-- Or check your Atlas connection string in `.env`
-
-**Student registration blocked**
-- Students must use a `.edu.pk` email
-- Example: `yourname@nust.edu.pk`
-
-**White screen on frontend**
-- Make sure only one `<BrowserRouter>` exists — it should be inside `App.jsx` only, not in `main.jsx`
-
-**Port already in use**
-- Change `PORT=4500` to another number like `4501` in your `.env`
+### Frontend `.env`
+| Variable | Description |
+|----------|-------------|
+| `VITE_API_URL` | Backend API URL |
 
 ---
 
@@ -257,12 +316,39 @@ npm install cors
 
 | Feature | Student | Donor | Admin |
 |---------|---------|-------|-------|
+| Browse home page | ✅ | ✅ | ✅ |
 | Register / Login | ✅ | ✅ | ✅ |
 | Create funding request | ✅ | ❌ | ❌ |
-| Browse approved requests | ✅ | ✅ | ✅ |
-| Donate to a request | ❌ | ✅ | ❌ |
+| Upload fee challan | ✅ | ❌ | ❌ |
+| View fee challan | ✅ | ✅ | ✅ |
+| Donate to requests | ✅ | ✅ | ❌ |
+| Upload payment proof | ✅ | ✅ | ❌ |
 | Approve / Reject requests | ❌ | ❌ | ✅ |
 | Manage users | ❌ | ❌ | ✅ |
+
+---
+
+## ❗ Common Issues & Fixes
+
+**CORS Error**
+```js
+// Add to Backend/server.js
+app.use(cors({ origin: "http://localhost:5173" }));
+```
+
+**Student registration blocked**
+- Must use `.edu.pk` email e.g. `yourname@nust.edu.pk`
+
+**404 on page refresh**
+- Make sure `frontend/vercel.json` exists with rewrite rules
+
+**Cloudinary upload failing**
+- Check all 3 Cloudinary env variables are set correctly
+- Make sure `express.json({ limit: "10mb" })` is in server.js
+
+**MongoDB connection timeout**
+- Check Atlas Network Access allows `0.0.0.0/0`
+- Verify `MONGO_URI` is correct in environment variables
 
 ---
 
@@ -276,6 +362,12 @@ npm install cors
 
 ---
 
+## 📄 License
+
+This project is open source and available under the [MIT License](LICENSE).
+
+---
+
 ## 👨‍💻 Author
 
-=> [Deepak Lal](https://github.com/deepaklal009)
+Made with ❤️ by [Deepak Lal](https://github.com/deepaklal009)
