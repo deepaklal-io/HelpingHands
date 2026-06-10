@@ -8,7 +8,7 @@ const storage = new CloudinaryStorage({
   params: {
     folder: "helping-hands",
 
-    allowed_formats: [
+    allowedFormats: [
       "jpg",
       "jpeg",
       "png",
