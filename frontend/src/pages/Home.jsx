@@ -35,23 +35,23 @@ export default function Home() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
 
-  useEffect(() => {
-    // Fetch approved requests for display cards
-    api.get("/requests/approved")
-      .then(({ data }) => setRequests(Array.isArray(data) ? data : []))
-      .catch(() => setRequests([]));
+useEffect(() => {
+  // Fetch approved requests for display cards
+  api.get("/requests/approved")
+    .then(({ data }) => setRequests(Array.isArray(data) ? data : []))
+    .catch(() => setRequests([]));
 
-    // Fetch ALL requests for accurate stats including completed
-    api.get("/requests")
-      .then(({ data }) => {
-        const all = Array.isArray(data) ? data : [];
-        const completed = all.filter(r => r.status === "completed").length;
-        const totalRaised = all.reduce((s, r) => s + (r.receivedAmount || 0), 0);
-        setAllStats({ completed, totalRaised });
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+  // Fetch ALL requests for accurate stats including completed
+  api.get("/requests")
+    .then(({ data }) => {
+      const all = Array.isArray(data) ? data : [];
+      const completed = all.filter(r => r.status === "completed").length;
+      const totalRaised = all.reduce((s, r) => s + (r.receivedAmount || 0), 0);
+      setAllStats({ completed, totalRaised });
+    })
+    .catch(() => {})
+    .finally(() => setLoading(false));
+}, []);
 
   const filtered = requests.filter((r) => {
     const matchSearch =

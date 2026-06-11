@@ -88,8 +88,25 @@ const fetchMyDonations = async () => {
   setError("");
   setSuccess("");
 
+  const compressImage = (file) => {
+  return new Promise((resolve) => {
+    const canvas = document.createElement("canvas");
+    const img = new Image();
+    img.onload = () => {
+      // Max 800px wide
+      const maxW = 800;
+      const scale = Math.min(1, maxW / img.width);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.7); // 70% quality
+    };
+    img.src = URL.createObjectURL(file);
+  });
+};
   try {
     // Convert file to base64
+    const compressed = await compressImage(challanFile);
     const base64 = await new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(challanFile);

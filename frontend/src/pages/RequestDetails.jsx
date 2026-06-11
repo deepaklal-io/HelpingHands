@@ -56,6 +56,11 @@ export default function RequestDetails() {
     e.preventDefault();
     setDonating(true);
     setError("");
+      setRequest(prev => ({
+    ...prev,
+    receivedAmount: (prev.receivedAmount || 0) + Number(amount)
+  }));
+
 
     try {
       let paymentProofBase64 = null;
