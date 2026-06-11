@@ -30,30 +30,36 @@ const categories = ["all", "tuition", "books", "accommodation", "medical", "othe
 
 export default function Home() {
   const [requests, setRequests] = useState([]);
+  const [allStats, setAllStats] = useState({ completed: 0, totalRaised: 0 });
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
 
   useEffect(() => {
+    // Fetch approved requests for display cards
     api.get("/requests/approved")
       .then(({ data }) => setRequests(Array.isArray(data) ? data : []))
+      .catch(() => setRequests([]));
+
+    // Fetch ALL requests for accurate stats including completed
+    api.get("/requests")
+      .then(({ data }) => {
+        const all = Array.isArray(data) ? data : [];
+        const completed = all.filter(r => r.status === "completed").length;
+        const totalRaised = all.reduce((s, r) => s + (r.receivedAmount || 0), 0);
+        setAllStats({ completed, totalRaised });
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
   const filtered = requests.filter((r) => {
     const matchSearch =
-      r.title.toLowerCase().includes(search.toLowerCase()) ||
-      r.description.toLowerCase().includes(search.toLowerCase());
+      r.title?.toLowerCase().includes(search.toLowerCase()) ||
+      r.description?.toLowerCase().includes(search.toLowerCase());
     const matchFilter = filter === "all" || r.category === filter;
     return matchSearch && matchFilter;
   });
-
-  const stats = {
-    students: requests.length,
-    completed: requests.filter((r) => r.status === "completed").length,
-    totalRaised: requests.reduce((s, r) => s + (r.receivedAmount || 0), 0),
-  };
 
   const user = JSON.parse(localStorage.getItem("user") || "null");
   const dashPath =
@@ -117,13 +123,13 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Stats Bar */}
+        {/* Stats Bar — uses allStats for accuracy */}
         <div className="bg-white/10 border-t border-white/20">
           <div className="max-w-6xl mx-auto px-4 py-6 grid grid-cols-3 gap-4 text-center">
             {[
-              { label: "Active Requests", value: stats.students },
-              { label: "Students Helped", value: stats.completed },
-              { label: "Total Raised", value: `PKR ${stats.totalRaised.toLocaleString()}` },
+              { label: "Active Requests", value: requests.length },
+              { label: "Students Helped", value: allStats.completed },
+              { label: "Total Raised", value: `PKR ${allStats.totalRaised.toLocaleString()}` },
             ].map((s) => (
               <div key={s.label}>
                 <p className="text-2xl sm:text-3xl font-bold text-white">{s.value}</p>
@@ -140,9 +146,9 @@ export default function Home() {
           <h2 className="text-2xl font-bold text-gray-800 text-center mb-8">How It Works</h2>
           <div className="grid sm:grid-cols-3 gap-6">
             {[
-              { icon: "🎓", title: "Student Applies", desc: "A verified university student submits a funding request with proof of need." },
-              { icon: "✅", title: "Admin Reviews", desc: "Our team reviews and approves genuine requests within 24-48 hours." },
-              { icon: "💛", title: "Donors Give", desc: "Donors browse approved requests and contribute any amount directly." },
+              { icon: "🎓", title: "Student Applies", desc: "A verified university student submits a funding request with fee challan as proof of need." },
+              { icon: "✅", title: "Admin Reviews", desc: "Our team reviews the challan and approves genuine requests within 24-48 hours." },
+              { icon: "💛", title: "Donors Give", desc: "Donors browse approved requests and contribute any amount directly with payment proof." },
             ].map((step) => (
               <div key={step.title} className="text-center p-5 rounded-xl bg-gray-50 border border-gray-100">
                 <div className="text-4xl mb-3">{step.icon}</div>
@@ -225,7 +231,7 @@ export default function Home() {
         <div className="mt-14 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl p-8 text-center text-white">
           <h2 className="text-2xl font-bold mb-3">Are You a University Student in Need?</h2>
           <p className="text-emerald-100 mb-6 text-sm max-w-md mx-auto">
-            Register with your university email and submit a funding request. Our team reviews every application carefully.
+            Register with your university email and submit a funding request with your fee challan. Our team reviews every application carefully.
           </p>
           <Link to="/register" className="inline-block px-8 py-3 bg-white text-emerald-700 font-semibold rounded-lg hover:bg-emerald-50 transition">
             Submit a Request
@@ -244,7 +250,7 @@ export default function Home() {
             </div>
             <span className="font-medium text-gray-700">Helping Hands</span>
           </div>
-          <p>© 2026 Helping Hands. Made with ❤️ for Pakistani students.</p>
+          <p>© 2024 Helping Hands. Made with ❤️ for Pakistani students.</p>
           <div className="flex gap-4">
             <Link to="/login" className="hover:text-gray-800 transition">Sign In</Link>
             <Link to="/register" className="hover:text-gray-800 transition">Register</Link>
