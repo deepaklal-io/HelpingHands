@@ -1,8 +1,5 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-const [updateText, setUpdateText] = useState("");
-const [postingUpdate, setPostingUpdate] = useState(false);
-const [updateSuccess, setUpdateSuccess] = useState("");
 import Navbar from "../components/Navbar";
 import api from "../api/axios";
 
@@ -25,6 +22,9 @@ export default function RequestDetails() {
   const [viewingProof, setViewingProof] = useState(null);
   const [showShare, setShowShare] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [updateText, setUpdateText] = useState("");
+const [postingUpdate, setPostingUpdate] = useState(false);
+const [updateSuccess, setUpdateSuccess] = useState("");
 
   const loadRequest = async () => {
     try {
