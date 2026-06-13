@@ -14,18 +14,26 @@ export default function RequestCard({ request, showActions, onDelete }) {
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md transition">
       <div className="flex items-start justify-between gap-3 mb-3">
-        <div>
-          <h3 className="font-semibold text-gray-800 text-base leading-snug">{title}</h3>
-          {category && (
-            <span className="inline-block mt-1 text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">
-              {category}
-            </span>
-          )}
-        </div>
-        <span className={`text-xs px-2.5 py-1 rounded-full font-medium capitalize shrink-0 ${statusColors[status] || "bg-gray-100 text-gray-600"}`}>
-          {status}
-        </span>
-      </div>
+  <div>
+    <h3 className="font-semibold text-gray-800 text-base leading-snug">{title}</h3>
+    {category && (
+      <span className="inline-block mt-1 text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">
+        {category}
+      </span>
+    )}
+  </div>
+  <div className="flex flex-col items-end gap-1 shrink-0">
+    <span className={`text-xs px-2.5 py-1 rounded-full font-medium capitalize ${statusColors[status] || "bg-gray-100 text-gray-600"}`}>
+      {status}
+    </span>
+    {/* ✅ Verified Badge */}
+    {(status === "approved" || status === "completed") && (
+      <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+        ✅ Verified
+      </span>
+    )}
+  </div>
+</div>
 
       <p className="text-sm text-gray-500 mb-4 line-clamp-2">{description}</p>
 

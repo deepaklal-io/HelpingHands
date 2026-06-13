@@ -208,6 +208,10 @@ useEffect(() => {
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <h3 className="font-semibold text-gray-800 text-sm leading-snug">{r.title}</h3>
                   <span className="text-lg shrink-0">{categoryIcons[r.category] || "💛"}</span>
+                   {/* ✅ Verified Badge */}
+    <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+      ✅ Verified
+    </span>
                 </div>
                 {r.category && (
                   <span className="inline-block text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full mb-3 w-fit capitalize">

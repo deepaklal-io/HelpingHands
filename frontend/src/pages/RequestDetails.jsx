@@ -144,11 +144,19 @@ export default function RequestDetails() {
         {/* Request Card */}
         <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
           <div className="flex items-start justify-between gap-4 mb-4">
-            <h1 className="text-xl font-bold text-gray-800">{request.title}</h1>
-            <span className={`text-xs px-3 py-1 rounded-full font-medium capitalize shrink-0 ${statusColors[request.status] || ""}`}>
-              {request.status}
-            </span>
-          </div>
+  <div>
+    <h1 className="text-xl font-bold text-gray-800">{request.title}</h1>
+    {/* ✅ Verified Badge */}
+    {(request.status === "approved" || request.status === "completed") && (
+      <span className="inline-flex items-center gap-1 mt-2 text-xs text-emerald-600 font-medium bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+        ✅ Verified by Admin
+      </span>
+    )}
+  </div>
+  <span className={`text-xs px-3 py-1 rounded-full font-medium capitalize shrink-0 ${statusColors[request.status] || ""}`}>
+    {request.status}
+  </span>
+</div>
 
           {request.category && (
             <span className="inline-block text-xs px-2.5 py-1 bg-gray-100 text-gray-600 rounded-full mb-4 capitalize">
