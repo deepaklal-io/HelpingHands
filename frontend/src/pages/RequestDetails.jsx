@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+const [updateText, setUpdateText] = useState("");
+const [postingUpdate, setPostingUpdate] = useState(false);
+const [updateSuccess, setUpdateSuccess] = useState("");
 import Navbar from "../components/Navbar";
 import api from "../api/axios";
 
@@ -60,6 +63,22 @@ export default function RequestDetails() {
       setProofPreview(URL.createObjectURL(file));
     }
   };
+
+  const handlePostUpdate = async (e) => {
+  e.preventDefault();
+  setPostingUpdate(true);
+  try {
+    await api.post(`/requests/${id}/update`, { text: updateText });
+    setUpdateText("");
+    setUpdateSuccess("Update posted successfully!");
+    setTimeout(() => setUpdateSuccess(""), 3000);
+    loadRequest(); // refresh to show new update
+  } catch (err) {
+    setError(err.response?.data?.message || "Failed to post update.");
+  } finally {
+    setPostingUpdate(false);
+  }
+};
 
   const handleDonate = async (e) => {
     e.preventDefault();
@@ -457,6 +476,88 @@ export default function RequestDetails() {
             </div>
           </div>
         )}
+
+        {/* Request Updates */}
+{(request.updates?.length > 0 || isOwner) && (
+  <div className="bg-white border border-gray-200 rounded-2xl p-6 mt-6">
+    <h2 className="font-semibold text-gray-800 mb-4">
+      📢 Updates from Student
+    </h2>
+
+    {/* Post Update Form — only for owner */}
+    {isOwner && (
+      <form onSubmit={handlePostUpdate} className="mb-6">
+        {updateSuccess && (
+          <div className="mb-3 p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-lg">
+            {updateSuccess}
+          </div>
+        )}
+        <div className="flex gap-3">
+          <input
+            type="text"
+            value={updateText}
+            onChange={(e) => setUpdateText(e.target.value)}
+            required
+            placeholder="Post an update for your donors e.g. Fee paid successfully!"
+            className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          />
+          <button
+            type="submit"
+            disabled={postingUpdate || !updateText.trim()}
+            className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white text-sm font-semibold rounded-lg transition"
+          >
+            {postingUpdate ? "Posting..." : "Post"}
+          </button>
+        </div>
+        <p className="text-xs text-gray-400 mt-1.5">
+          💡 Keep your donors informed about how their support helped you
+        </p>
+      </form>
+    )}
+
+    {/* Updates Timeline */}
+    {request.updates?.length > 0 ? (
+      <div className="space-y-4">
+        {[...request.updates].reverse().map((update, i) => (
+          <div key={i} className="flex gap-3">
+            <div className="flex flex-col items-center">
+              <div className="w-8 h-8 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-sm font-bold shrink-0">
+                {request.studentId?.name?.[0]?.toUpperCase()}
+              </div>
+              {i < request.updates.length - 1 && (
+                <div className="w-0.5 bg-gray-200 flex-1 mt-2" />
+              )}
+            </div>
+            <div className="flex-1 pb-4">
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-medium text-gray-700">
+                    {request.studentId?.name}
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    {new Date(update.createdAt).toLocaleDateString("en-PK", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </p>
+                </div>
+                <p className="text-sm text-gray-700 leading-relaxed">{update.text}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    ) : (
+      isOwner && (
+        <div className="text-center py-8 text-gray-400">
+          <p className="text-sm">No updates yet</p>
+          <p className="text-xs mt-1">Post your first update to keep donors informed!</p>
+        </div>
+      )
+    )}
+  </div>
+)}
       </div>
     </div>
   );

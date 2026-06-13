@@ -60,6 +60,34 @@ export const getAllRequests = async (req, res) => {
   }
 };
 
+export const addRequestUpdate = async (req, res) => {
+  try {
+    const { text } = req.body;
+
+    const request = await HelpRequest.findById(req.params.id);
+
+    if (!request) {
+      return res.status(404).json({ message: "Request not found" });
+    }
+
+    // Only the owner can post updates
+    if (request.studentId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    if (!text || text.trim() === "") {
+      return res.status(400).json({ message: "Update text is required" });
+    }
+
+    request.updates.push({ text: text.trim() });
+    await request.save();
+
+    res.status(201).json({ message: "Update posted successfully", updates: request.updates });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export const getFeaturedRequests = async (req, res) => {
   try {
     const requests = await HelpRequest.find({ status: "approved" })

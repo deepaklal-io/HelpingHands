@@ -2,7 +2,7 @@ import express from "express";
 import {
   createRequest, getAllRequests, getMyRequests,
   getRequestById, getApprovedRequests,
-  approveRequest, rejectRequest, updateRequest, deleteRequest,
+  approveRequest, rejectRequest, updateRequest, deleteRequest,addRequestUpdate,
 } from "../controllers/requestController.js";
 import { protect } from "../middleware/authMiddleware.js";
 import { adminOnly } from "../middleware/adminMiddleware.js";
@@ -11,6 +11,7 @@ const router = express.Router();
 
 router.patch("/:id/approve", protect, adminOnly, approveRequest);
 router.patch("/:id/reject",  protect, adminOnly, rejectRequest);
+router.post("/:id/update", protect, addRequestUpdate);
 
 // No upload middleware here anymore
 router.post(
