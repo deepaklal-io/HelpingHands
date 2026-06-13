@@ -20,6 +20,8 @@ export default function RequestDetails() {
   const [success, setSuccess] = useState("");
   const [showChallan, setShowChallan] = useState(false);
   const [viewingProof, setViewingProof] = useState(null);
+  const [showShare, setShowShare] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const loadRequest = async () => {
     try {
@@ -44,6 +46,13 @@ export default function RequestDetails() {
     loadDonations();
   }, [id]);
 
+  // Close share menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => setShowShare(false);
+    if (showShare) document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [showShare]);
+
   const handleProofFile = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -56,16 +65,15 @@ export default function RequestDetails() {
     e.preventDefault();
     setDonating(true);
     setError("");
-      setRequest(prev => ({
-    ...prev,
-    receivedAmount: (prev.receivedAmount || 0) + Number(amount)
-  }));
 
+    // Optimistic update
+    setRequest(prev => ({
+      ...prev,
+      receivedAmount: (prev.receivedAmount || 0) + Number(amount)
+    }));
 
     try {
       let paymentProofBase64 = null;
-
-      // Convert proof image to base64 if provided
       if (proofFile) {
         paymentProofBase64 = await new Promise((resolve, reject) => {
           const reader = new FileReader();
@@ -90,6 +98,7 @@ export default function RequestDetails() {
       loadRequest();
       loadDonations();
     } catch (err) {
+      loadRequest(); // revert optimistic update
       setError(err.response?.data?.message || "Donation failed.");
     } finally {
       setDonating(false);
@@ -134,29 +143,74 @@ export default function RequestDetails() {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       <div className="max-w-3xl mx-auto px-4 py-8">
-        <button
-          onClick={() => navigate(-1)}
-          className="text-sm text-gray-500 hover:text-gray-800 mb-6 flex items-center gap-1 transition"
-        >
-          ← Back
-        </button>
+
+        {/* Back + Share */}
+        <div className="flex items-center justify-between mb-6">
+          <button
+            onClick={() => navigate(-1)}
+            className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1 transition"
+          >
+            ← Back
+          </button>
+
+          {/* Share Button */}
+          <div className="relative" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setShowShare(!showShare)}
+              className="flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition"
+            >
+              🔗 Share
+            </button>
+
+            {showShare && (
+              <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-xl shadow-lg p-3 z-10 w-52">
+                <a
+                  href={`https://wa.me/?text=Support this student: ${request.title} - ${window.location.href}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition"
+                >
+                  <span>💬</span> Share on WhatsApp
+                </a>
+                <a
+                  href={`https://twitter.com/intent/tweet?text=Support this student: ${request.title}&url=${window.location.href}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition"
+                >
+                  <span>🐦</span> Share on X
+                </a>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(window.location.href);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition"
+                >
+                  <span>{copied ? "✅" : "📋"}</span>
+                  {copied ? "Copied!" : "Copy Link"}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Request Card */}
         <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
           <div className="flex items-start justify-between gap-4 mb-4">
-  <div>
-    <h1 className="text-xl font-bold text-gray-800">{request.title}</h1>
-    {/* ✅ Verified Badge */}
-    {(request.status === "approved" || request.status === "completed") && (
-      <span className="inline-flex items-center gap-1 mt-2 text-xs text-emerald-600 font-medium bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-        ✅ Verified by Admin
-      </span>
-    )}
-  </div>
-  <span className={`text-xs px-3 py-1 rounded-full font-medium capitalize shrink-0 ${statusColors[request.status] || ""}`}>
-    {request.status}
-  </span>
-</div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-800">{request.title}</h1>
+              {(request.status === "approved" || request.status === "completed") && (
+                <span className="inline-flex items-center gap-1 mt-2 text-xs text-emerald-600 font-medium bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                  ✅ Verified by Admin
+                </span>
+              )}
+            </div>
+            <span className={`text-xs px-3 py-1 rounded-full font-medium capitalize shrink-0 ${statusColors[request.status] || ""}`}>
+              {request.status}
+            </span>
+          </div>
 
           {request.category && (
             <span className="inline-block text-xs px-2.5 py-1 bg-gray-100 text-gray-600 rounded-full mb-4 capitalize">
@@ -214,17 +268,10 @@ export default function RequestDetails() {
               </div>
               {showChallan && (
                 <div className="p-4 bg-white">
-                  <img
-                    src={request.challanImage}
-                    alt="Fee Challan"
-                    className="w-full object-contain max-h-96 rounded-lg border border-gray-100"
-                  />
-                  <a
-                    href={request.challanImage}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-block mt-2 text-xs text-blue-600 hover:underline"
-                  >
+                  <img src={request.challanImage} alt="Fee Challan"
+                    className="w-full object-contain max-h-96 rounded-lg border border-gray-100" />
+                  <a href={request.challanImage} target="_blank" rel="noreferrer"
+                    className="inline-block mt-2 text-xs text-blue-600 hover:underline">
                     🔗 Open full image in new tab
                   </a>
                 </div>
@@ -286,62 +333,41 @@ export default function RequestDetails() {
             {success && <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-lg">{success}</div>}
 
             <form onSubmit={handleDonate} className="space-y-4">
-              {/* Amount */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Amount (PKR)</label>
                 <input
-                  type="number"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  required
-                  min={1}
-                  max={remaining}
+                  type="number" value={amount} onChange={(e) => setAmount(e.target.value)}
+                  required min={1} max={remaining}
                   placeholder={`Max: PKR ${remaining.toLocaleString()}`}
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
-                {/* Quick amounts */}
                 <div className="flex gap-2 mt-2 flex-wrap">
                   {[500, 1000, 5000, 10000].filter(amt => amt <= remaining).map((amt) => (
-                    <button
-                      key={amt}
-                      type="button"
-                      onClick={() => setAmount(amt)}
-                      className="px-3 py-1 text-xs border border-emerald-300 text-emerald-700 rounded-md hover:bg-emerald-50 transition"
-                    >
+                    <button key={amt} type="button" onClick={() => setAmount(amt)}
+                      className="px-3 py-1 text-xs border border-emerald-300 text-emerald-700 rounded-md hover:bg-emerald-50 transition">
                       PKR {amt.toLocaleString()}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Message */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Message <span className="text-gray-400 font-normal">(optional)</span>
                 </label>
-                <input
-                  type="text"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
+                <input type="text" value={message} onChange={(e) => setMessage(e.target.value)}
                   placeholder="e.g. Best of luck with your studies!"
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
               </div>
 
-              {/* Payment Proof Upload */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Payment Screenshot <span className="text-gray-400 font-normal">(optional but recommended)</span>
                 </label>
-                <p className="text-xs text-gray-400 mb-2">
-                  Upload a screenshot of your bank transfer or payment app as proof of donation.
-                </p>
-                <div
-                  onClick={() => document.getElementById("proofInput").click()}
+                <div onClick={() => document.getElementById("proofInput").click()}
                   className={`border-2 border-dashed rounded-lg p-5 text-center cursor-pointer transition ${
                     proofPreview ? "border-emerald-400 bg-emerald-50" : "border-gray-300 hover:border-emerald-400"
-                  }`}
-                >
+                  }`}>
                   {proofPreview ? (
                     <div>
                       <img src={proofPreview} alt="Payment proof" className="max-h-40 mx-auto rounded-lg mb-2 object-contain" />
@@ -356,20 +382,12 @@ export default function RequestDetails() {
                     </div>
                   )}
                 </div>
-                <input
-                  id="proofInput"
-                  type="file"
-                  accept="image/jpeg,image/png,image/jpg"
-                  onChange={handleProofFile}
-                  className="hidden"
-                />
+                <input id="proofInput" type="file" accept="image/jpeg,image/png,image/jpg"
+                  onChange={handleProofFile} className="hidden" />
               </div>
 
-              <button
-                type="submit"
-                disabled={donating || remaining <= 0}
-                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white text-sm font-semibold rounded-lg transition flex items-center justify-center gap-2"
-              >
+              <button type="submit" disabled={donating || remaining <= 0}
+                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white text-sm font-semibold rounded-lg transition flex items-center justify-center gap-2">
                 {donating ? (
                   <>
                     <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
@@ -391,12 +409,10 @@ export default function RequestDetails() {
           </div>
         )}
 
-        {/* Donations List with proof */}
+        {/* Donations List */}
         {donations.length > 0 && (
           <div className="bg-white border border-gray-200 rounded-2xl p-6">
-            <h2 className="font-semibold text-gray-800 mb-4">
-              Donations ({donations.length})
-            </h2>
+            <h2 className="font-semibold text-gray-800 mb-4">Donations ({donations.length})</h2>
             <div className="space-y-4">
               {donations.map((d) => (
                 <div key={d._id} className="border border-gray-100 rounded-xl p-4">
@@ -410,46 +426,27 @@ export default function RequestDetails() {
                         <p className="text-xs text-gray-400">{new Date(d.createdAt).toLocaleDateString()}</p>
                       </div>
                     </div>
-                    <span className="text-sm font-semibold text-emerald-600">
-                      PKR {d.amount?.toLocaleString()}
-                    </span>
+                    <span className="text-sm font-semibold text-emerald-600">PKR {d.amount?.toLocaleString()}</span>
                   </div>
-
-                  {/* Donor message */}
-                  {d.message && (
-                    <p className="text-xs text-gray-500 italic mb-2 pl-11">"{d.message}"</p>
-                  )}
-
-                  {/* Payment proof */}
+                  {d.message && <p className="text-xs text-gray-500 italic mb-2 pl-11">"{d.message}"</p>}
                   {d.paymentProof && (
                     <div className="pl-11">
-                      <button
-                        onClick={() => setViewingProof(viewingProof === d._id ? null : d._id)}
-                        className="text-xs text-blue-600 hover:underline flex items-center gap-1"
-                      >
+                      <button onClick={() => setViewingProof(viewingProof === d._id ? null : d._id)}
+                        className="text-xs text-blue-600 hover:underline flex items-center gap-1">
                         📸 {viewingProof === d._id ? "Hide payment proof ▲" : "View payment proof ▼"}
                       </button>
                       {viewingProof === d._id && (
                         <div className="mt-2">
-                          <img
-                            src={d.paymentProof}
-                            alt="Payment proof"
-                            className="max-h-48 rounded-lg border border-gray-200 object-contain"
-                          />
-                          <a
-                            href={d.paymentProof}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-block mt-1 text-xs text-blue-600 hover:underline"
-                          >
+                          <img src={d.paymentProof} alt="Payment proof"
+                            className="max-h-48 rounded-lg border border-gray-200 object-contain" />
+                          <a href={d.paymentProof} target="_blank" rel="noreferrer"
+                            className="inline-block mt-1 text-xs text-blue-600 hover:underline">
                             🔗 Open full image
                           </a>
                         </div>
                       )}
                     </div>
                   )}
-
-                  {/* No proof badge */}
                   {!d.paymentProof && (
                     <div className="pl-11">
                       <span className="text-xs text-gray-400">No payment proof uploaded</span>
@@ -461,8 +458,6 @@ export default function RequestDetails() {
           </div>
         )}
       </div>
-
-      {/* Challan fullscreen - removed, using inline expand instead */}
     </div>
   );
 }
