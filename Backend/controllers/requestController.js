@@ -87,6 +87,23 @@ export const addRequestUpdate = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+export const rejectRequest = async (req, res) => {
+  try {
+    const request = await HelpRequest.findById(req.params.id);
+
+    if (!request) {
+      return res.status(404).json({ message: "Request not found" });
+    }
+
+    request.status = "rejected";
+    request.rejectionReason = req.body.reason || "No reason provided"; // ← add this
+
+    await request.save();
+    res.status(200).json(request);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 export const getFeaturedRequests = async (req, res) => {
   try {
