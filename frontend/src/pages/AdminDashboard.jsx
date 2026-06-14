@@ -9,22 +9,28 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [actionMsg, setActionMsg] = useState("");
-  const [selectedRequest, setSelectedRequest] = useState(null); // for modal
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [showRejectForm, setShowRejectForm] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
+    setError("");
     try {
-      const [reqRes, usersRes] = await Promise.all([
-        api.get("/requests"),
-        api.get("/admin/users"),
-      ]);
+      const reqRes = await api.get("/requests");
       setRequests(Array.isArray(reqRes.data) ? reqRes.data : []);
+    } catch {
+      setError("Failed to load requests.");
+    }
+
+    try {
+      const usersRes = await api.get("/admin/users");
       setUsers(Array.isArray(usersRes.data) ? usersRes.data : []);
     } catch {
-      setError("Failed to load admin data.");
-    } finally {
-      setLoading(false);
+      // users failing won't break the whole dashboard
     }
+
+    setLoading(false);
   };
 
   useEffect(() => { fetchData(); }, []);
@@ -41,10 +47,16 @@ export default function AdminDashboard() {
   };
 
   const handleReject = async (id) => {
+    if (!rejectionReason.trim()) {
+      setError("Please enter a rejection reason.");
+      return;
+    }
     try {
-      await api.patch(`/requests/${id}/reject`);
+      await api.patch(`/requests/${id}/reject`, { reason: rejectionReason });
       flash("❌ Request rejected.");
       setSelectedRequest(null);
+      setRejectionReason("");
+      setShowRejectForm(false);
       fetchData();
     } catch { setError("Failed to reject request."); }
   };
@@ -105,13 +117,10 @@ export default function AdminDashboard() {
         {/* Tabs */}
         <div className="flex gap-1 mb-6 bg-gray-100 rounded-lg p-1 w-fit">
           {[{ key: "requests", label: "Requests" }, { key: "users", label: "Users" }].map((t) => (
-            <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
+            <button key={t.key} onClick={() => setTab(t.key)}
               className={`px-5 py-2 text-sm font-medium rounded-md transition ${
                 tab === t.key ? "bg-white shadow-sm text-gray-800" : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
+              }`}>
               {t.label}
             </button>
           ))}
@@ -143,10 +152,8 @@ export default function AdminDashboard() {
                     <td className="px-5 py-3 text-right text-gray-700">PKR {r.amountNeeded?.toLocaleString()}</td>
                     <td className="px-5 py-3 text-center">
                       {r.challanImage ? (
-                        <button
-                          onClick={() => setSelectedRequest(r)}
-                          className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition"
-                        >
+                        <button onClick={() => setSelectedRequest(r)}
+                          className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition">
                           👁 View
                         </button>
                       ) : (
@@ -159,14 +166,18 @@ export default function AdminDashboard() {
                     <td className="px-5 py-3 text-center">
                       {r.status === "pending" ? (
                         <div className="flex items-center justify-center gap-2">
-                          <button onClick={() => handleApprove(r._id)} className="px-3 py-1 text-xs bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition">Approve</button>
-                          <button onClick={() => handleReject(r._id)} className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition">Reject</button>
+                          <button onClick={() => handleApprove(r._id)}
+                            className="px-3 py-1 text-xs bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition">
+                            Approve
+                          </button>
+                          <button onClick={() => { setSelectedRequest(r); setShowRejectForm(true); }}
+                            className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition">
+                            Reject
+                          </button>
                         </div>
                       ) : (
-                        <button
-                          onClick={() => setSelectedRequest(r)}
-                          className="px-3 py-1 text-xs border border-gray-300 text-gray-600 rounded-md hover:bg-gray-100 transition"
-                        >
+                        <button onClick={() => { setSelectedRequest(r); setShowRejectForm(false); }}
+                          className="px-3 py-1 text-xs border border-gray-300 text-gray-600 rounded-md hover:bg-gray-100 transition">
                           Details
                         </button>
                       )}
@@ -198,7 +209,10 @@ export default function AdminDashboard() {
                     <td className="px-5 py-3 text-center"><span className={roleBadge(u.role)}>{u.role}</span></td>
                     <td className="px-5 py-3 text-center">
                       {u.role !== "admin" && (
-                        <button onClick={() => handleDeleteUser(u._id)} className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition">Delete</button>
+                        <button onClick={() => handleDeleteUser(u._id)}
+                          className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition">
+                          Delete
+                        </button>
                       )}
                     </td>
                   </tr>
@@ -216,7 +230,6 @@ export default function AdminDashboard() {
       {selectedRequest && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4 py-8">
           <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            {/* Modal Header */}
             <div className="flex items-start justify-between p-6 border-b border-gray-200">
               <div>
                 <h3 className="font-bold text-gray-800 text-lg">{selectedRequest.title}</h3>
@@ -227,7 +240,8 @@ export default function AdminDashboard() {
                   "bg-blue-100 text-blue-700"
                 }`}>{selectedRequest.status}</span>
               </div>
-              <button onClick={() => setSelectedRequest(null)} className="text-gray-400 hover:text-gray-700 text-xl font-bold">✕</button>
+              <button onClick={() => { setSelectedRequest(null); setShowRejectForm(false); setRejectionReason(""); }}
+                className="text-gray-400 hover:text-gray-700 text-xl font-bold">✕</button>
             </div>
 
             <div className="p-6 space-y-5">
@@ -260,6 +274,14 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
+              {/* Rejection Reason — show if rejected */}
+              {selectedRequest.status === "rejected" && selectedRequest.rejectionReason && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-xs font-semibold text-red-600 uppercase mb-1">❌ Rejection Reason</p>
+                  <p className="text-sm text-red-700">{selectedRequest.rejectionReason}</p>
+                </div>
+              )}
+
               {/* Bank Account */}
               {selectedRequest.bankAccount?.accountNumber && (
                 <div className="border border-gray-200 rounded-lg p-4">
@@ -286,18 +308,11 @@ export default function AdminDashboard() {
                 <div>
                   <p className="text-xs font-semibold text-gray-500 uppercase mb-2">📄 Fee Challan</p>
                   <div className="border border-gray-200 rounded-lg overflow-hidden">
-                    <img
-                      src={selectedRequest.challanImage}
-                      alt="Fee Challan"
-                      className="w-full object-contain max-h-80"
-                    />
+                    <img src={selectedRequest.challanImage} alt="Fee Challan"
+                      className="w-full object-contain max-h-80" />
                   </div>
-                  <a
-                    href={selectedRequest.challanImage}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-block mt-2 text-xs text-blue-600 hover:underline"
-                  >
+                  <a href={selectedRequest.challanImage} target="_blank" rel="noreferrer"
+                    className="inline-block mt-2 text-xs text-blue-600 hover:underline">
                     🔗 Open full image in new tab
                   </a>
                 </div>
@@ -309,19 +324,41 @@ export default function AdminDashboard() {
 
               {/* Action Buttons */}
               {selectedRequest.status === "pending" && (
-                <div className="flex gap-3 pt-2">
-                  <button
-                    onClick={() => handleApprove(selectedRequest._id)}
-                    className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm rounded-lg transition"
-                  >
-                    ✅ Approve Request
-                  </button>
-                  <button
-                    onClick={() => handleReject(selectedRequest._id)}
-                    className="flex-1 py-2.5 bg-red-100 hover:bg-red-200 text-red-700 font-semibold text-sm rounded-lg transition"
-                  >
-                    ❌ Reject Request
-                  </button>
+                <div className="space-y-3 pt-2">
+                  {/* Reject Form */}
+                  {showRejectForm ? (
+                    <div className="border border-red-200 rounded-lg p-4 bg-red-50">
+                      <p className="text-sm font-medium text-red-700 mb-2">Enter rejection reason:</p>
+                      <textarea
+                        value={rejectionReason}
+                        onChange={(e) => setRejectionReason(e.target.value)}
+                        rows={3}
+                        placeholder="e.g. Challan image is not clear, please resubmit..."
+                        className="w-full px-3 py-2 border border-red-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none bg-white"
+                      />
+                      <div className="flex gap-2 mt-3">
+                        <button onClick={() => handleReject(selectedRequest._id)}
+                          className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm rounded-lg transition">
+                          Confirm Reject
+                        </button>
+                        <button onClick={() => { setShowRejectForm(false); setRejectionReason(""); }}
+                          className="px-4 py-2 border border-gray-300 text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition">
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex gap-3">
+                      <button onClick={() => handleApprove(selectedRequest._id)}
+                        className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm rounded-lg transition">
+                        ✅ Approve Request
+                      </button>
+                      <button onClick={() => setShowRejectForm(true)}
+                        className="flex-1 py-2.5 bg-red-100 hover:bg-red-200 text-red-700 font-semibold text-sm rounded-lg transition">
+                        ❌ Reject Request
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
