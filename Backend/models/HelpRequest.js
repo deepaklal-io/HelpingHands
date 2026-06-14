@@ -51,10 +51,6 @@ const helpRequestSchema = new mongoose.Schema(
       accountNumber: { type: String, default: "" },
       bankName: { type: String, default: "" },
     },
-    rejectionReason: {
-  type: String,
-  default: null,
-},
     updates: [
   {
     text: { type: String, required: true },
