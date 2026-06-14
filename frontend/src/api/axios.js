@@ -12,10 +12,4 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Ping backend every 5 minutes to keep it awake
-const keepAlive = () => {
-  api.get("/").catch(() => {});
-};
-setInterval(keepAlive, 5 * 60 * 1000); // every 5 min
-keepAlive(); // ping immediately on load
 export default api;
