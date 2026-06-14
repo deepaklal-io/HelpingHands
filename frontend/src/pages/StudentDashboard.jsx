@@ -89,30 +89,36 @@ const fetchMyDonations = async () => {
   setSuccess("");
 
   const compressImage = (file) => {
-  return new Promise((resolve) => {
-    const canvas = document.createElement("canvas");
-    const img = new Image();
-    img.onload = () => {
-      // Max 800px wide
-      const maxW = 800;
-      const scale = Math.min(1, maxW / img.width);
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
-      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-      canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.7); // 70% quality
-    };
-    img.src = URL.createObjectURL(file);
-  });
-};
-  try {
-    // Convert file to base64
-    const compressed = await compressImage(challanFile);
-    const base64 = await new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement("canvas");
+      const img = new Image();
+      img.onload = () => {
+        const maxW = 800;
+        const scale = Math.min(1, maxW / img.width);
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.7);
+      };
+      img.onerror = () => resolve(file);
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.readAsDataURL(challanFile);
       reader.onload = () => resolve(reader.result);
       reader.onerror = reject;
+      reader.readAsDataURL(file);
     });
+  };
+
+  try {
+    const base64File = challanFile.type.startsWith("image/")
+      ? await compressImage(challanFile)
+      : challanFile;
+    const base64 = await fileToBase64(base64File);
 
     await api.post("/requests", {
       ...form,
@@ -137,10 +143,9 @@ const fetchMyDonations = async () => {
     try {
       await api.delete(`/requests/${id}`);
       setRequests(
-  Array.isArray(data)
-    ? data.filter(Boolean)
-    : []
-);
+  setRequests((prev) =>
+  prev.filter((r) => r._id !== id)
+));
     } catch {
       setError("Failed to delete request.");
     }
