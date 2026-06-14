@@ -30,21 +30,21 @@ const categories = ["all", "tuition", "books", "accommodation", "medical", "othe
 
 export default function Home() {
   const [requests, setRequests] = useState([]);
+  const [allRequests, setAllRequests] = useState([]);
   const [allStats, setAllStats] = useState({ completed: 0, totalRaised: 0 });
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
 
 useEffect(() => {
-  // Fetch approved requests for display cards
   api.get("/requests/approved")
     .then(({ data }) => setRequests(Array.isArray(data) ? data : []))
     .catch(() => setRequests([]));
 
-  // Fetch ALL requests for accurate stats including completed
   api.get("/requests")
     .then(({ data }) => {
       const all = Array.isArray(data) ? data : [];
+      setAllRequests(all);
       const completed = all.filter(r => r.status === "completed").length;
       const totalRaised = all.reduce((s, r) => s + (r.receivedAmount || 0), 0);
       setAllStats({ completed, totalRaised });
@@ -53,7 +53,9 @@ useEffect(() => {
     .finally(() => setLoading(false));
 }, []);
 
-  const filtered = requests.filter((r) => {
+  const visibleRequests = requests.length > 0 ? requests : allRequests;
+
+  const filtered = visibleRequests.filter((r) => {
     const matchSearch =
       r.title?.toLowerCase().includes(search.toLowerCase()) ||
       r.description?.toLowerCase().includes(search.toLowerCase());
@@ -208,10 +210,15 @@ useEffect(() => {
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <h3 className="font-semibold text-gray-800 text-sm leading-snug">{r.title}</h3>
                   <span className="text-lg shrink-0">{categoryIcons[r.category] || "💛"}</span>
-                   {/* ✅ Verified Badge */}
-    <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-      ✅ Verified
-    </span>
+                  {r.status === "approved" || r.status === "completed" ? (
+                    <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                      ✅ Verified
+                    </span>
+                  ) : (
+                    <span className="text-xs text-yellow-700 font-medium bg-yellow-50 px-2 py-0.5 rounded-full border border-yellow-200">
+                      {r.status || "pending"}
+                    </span>
+                  )}
                 </div>
                 {r.category && (
                   <span className="inline-block text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full mb-3 w-fit capitalize">

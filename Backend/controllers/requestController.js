@@ -104,7 +104,20 @@ export const approveRequest = async (req, res) => {
   }
 };
 
-// ✅ Only ONE rejectRequest with rejection reason
+export const rejectRequest = async (req, res) => {
+  try {
+    const request = await HelpRequest.findById(req.params.id);
+    if (!request) return sendRequestNotFound(res);
+
+    request.status = "rejected";
+    request.rejectionReason = req.body.reason || "No reason provided";
+
+    await request.save();
+    res.status(200).json(request);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 
 export const updateRequest = async (req, res) => {
