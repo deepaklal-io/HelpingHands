@@ -10,7 +10,7 @@ import { adminOnly } from "../middleware/adminMiddleware.js";
 const router = express.Router();
 
 router.patch("/:id/approve", protect, adminOnly, approveRequest);
-router.patch("/:id/reject",  protect, adminOnly, rejectRequest);
+router.patch("/:id/reject",  protect, adminOnly, rejectRequest);  
 router.post("/:id/update", protect, addRequestUpdate);
 
 // No upload middleware here anymore
