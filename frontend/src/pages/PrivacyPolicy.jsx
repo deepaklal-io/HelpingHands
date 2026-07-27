@@ -64,7 +64,7 @@ export default function PrivacyPolicy() {
             If you have questions about this Privacy Policy or how your data is
             handled, contact us at{" "}
             <a href="mailto:support@example.com" className="text-emerald-700 underline">
-              support@example.com
+              deepakdoultani00@gmail.com
             </a>
             .
           </p>
