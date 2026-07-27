@@ -6,6 +6,8 @@ import StudentDashboard from "./pages/StudentDashboard";
 import DonorDashboard from "./pages/DonorDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import RequestDetails from "./pages/RequestDetails";
+import AboutUs from "./pages/AboutUs";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 export default function App() {
@@ -15,6 +17,8 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/about" element={<AboutUs />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
 
         <Route path="/student" element={
           <ProtectedRoute role="student"><StudentDashboard /></ProtectedRoute>
