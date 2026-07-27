@@ -40,7 +40,7 @@ export default function AboutUs() {
             Have questions, concerns, or feedback about Helping Hands? Reach out to
             us at{" "}
             <a href="mailto:support@example.com" className="text-emerald-700 underline">
-              support@example.com
+              deepakdoultani00@gmail.com
             </a>
             . We're a small, independent project and take reports of misuse seriously.
           </p>
